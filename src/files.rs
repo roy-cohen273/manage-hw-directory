@@ -13,10 +13,9 @@ const DOWNLOADS: &str = "C:\\Users\\Roy Cohen\\Documents\\testing\\Downloads";
 const SUBJECTS: &str = "C:\\Users\\Roy Cohen\\Documents\\testing\\Subjects";
 const HW_PREFIX: &str = "HW";
 
-/// Create a new HW folder under the specified subject,
+/// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
-pub fn do_the_thing(subject: &str) -> io::Result<()> {
-    let subject_dir = get_subject_dir(subject)?;
+pub fn do_the_thing(subject_dir: &Path) -> io::Result<()> {
     let questions_file = get_most_recent_download()?;
     let hw_dir = create_hw_dir(&subject_dir)?;
     move_file(&questions_file, &hw_dir)?;
@@ -25,21 +24,7 @@ pub fn do_the_thing(subject: &str) -> io::Result<()> {
 
 /// Get a list of available subjects
 pub fn get_subjects() -> io::Result<impl Iterator<Item = PathBuf>> {
-    list_dir(Path::new(SUBJECTS))
-}
-
-fn get_subject_dir(subject: &str) -> io::Result<PathBuf> {
-    let mut subject_dir = PathBuf::from(SUBJECTS);
-    subject_dir.push(subject);
-
-    if subject_dir.is_dir() {
-        Ok(subject_dir)
-    } else {
-        Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            "subject folder not found",
-        ))
-    }
+    Ok(list_dir(Path::new(SUBJECTS))?.filter(|path| path.is_dir()))
 }
 
 fn list_dir(dir: &Path) -> io::Result<impl Iterator<Item = PathBuf>> {
@@ -84,7 +69,7 @@ fn get_most_recent_download() -> io::Result<PathBuf> {
             Some((entry, created))
         })
         .max_by_key(|(_entry, created)| *created)
-        .expect("downloads directory was empty")
+        .ok_or(io::Error::new(io::ErrorKind::NotFound, "downloads directory was empty"))?
         .0;
 
     Ok(most_recent_download.path())
