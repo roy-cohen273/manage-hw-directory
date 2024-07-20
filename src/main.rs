@@ -2,6 +2,7 @@ use std::io;
 
 mod files;
 mod interface;
+mod config;
 
 use interface::Interface;
 use crate::interface::CmdInterface;

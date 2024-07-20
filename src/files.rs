@@ -2,16 +2,7 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
 };
-
-// real config:
-// const DOWNLOADS: &str = "C:\\Users\\Roy Cohen\\Downloads";
-// const SUBJECTS: &str = "G:\\My Drive";
-// const HW_PREFIX: &str = "HW";
-
-// testing config:
-const DOWNLOADS: &str = "C:\\Users\\Roy Cohen\\Documents\\testing\\Downloads";
-const SUBJECTS: &str = "C:\\Users\\Roy Cohen\\Documents\\testing\\Subjects";
-const HW_PREFIX: &str = "HW";
+use crate::config::{DOWNLOADS, SUBJECTS, HW_PREFIX};
 
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
