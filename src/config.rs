@@ -1,47 +1,44 @@
-mod config_values;
+use std::path::Path;
+use formatx::formatx;
+use serde::Deserialize;
 
-pub use config_values::{
-    DOWNLOADS_DIR,
-    SUBJECTS_DIR,
-    LYX_TEMPLATE_FILE,
-    MAX_HW_DIRS,
-};
+#[derive(Deserialize)]
+pub struct Config {
+    downloads_dir: Option<Box<Path>>,
+    subjects_dir: Box<Path>,
+    max_hw_dirs: usize,
+    lyx_template_file: Option<Box<Path>>,
+    hw_dir_format: Box<str>,
+    questions_filename_format: Box<str>,
+    lyx_filename_format: Box<str>,
+}
 
-#[macro_export]
-macro_rules! dummy_capture {
-    ($($key:ident),*) => {
-        concat!($(concat!("{", stringify!($key), "}")),*)
+impl Config {
+    pub fn downloads_dir(&self) -> Option<&Path> {
+        self.downloads_dir.as_deref()
     }
-}
 
-#[macro_export]
-macro_rules! cfg_func {
-    ($($macro_name:ident -> $name:ident($($arg:ident:$T:ty),*);)*) => {
-        $(
-            pub fn $name($($arg: $T),*) -> String {
-                let dummy_len = format!(
-                    $crate::dummy_capture!($($arg),*),
-                    $($arg=$arg),*
-                )
-                    .len();
+    pub fn subjects_dir(&self) -> &Path {
+        &self.subjects_dir
+    }
 
-                let mut s = format!(
-                    concat!(
-                        $crate::$macro_name!(),
-                        $crate::dummy_capture!($($arg),*)
-                    ),
-                    $($arg=$arg),*
-                );
-                s.truncate(s.len() - dummy_len);
-                s.shrink_to_fit();
-                s
-            }
-        )*
-    };
-}
+    pub fn max_hw_dirs(&self) -> usize {
+        self.max_hw_dirs
+    }
 
-cfg_func! {
-    HW_DIR_FORMAT -> get_hw_dir(num: usize);
-    QUESTIONS_FILE_FORMAT -> get_questions_filname(num: usize, original: &str);
-    LYX_FILE_FORMAT -> get_lyx_filename(num: usize);
+    pub fn lyx_template_file(&self) -> Option<&Path> {
+        self.lyx_template_file.as_deref()
+    }
+
+    pub fn hw_dir(&self, num: usize) -> Result<String, formatx::Error> {
+        formatx!(self.hw_dir_format.to_owned(), num = num)
+    }
+
+    pub fn questions_filename(&self, num: usize, original: &str) -> Result<String, formatx::Error> {
+        formatx!(self.questions_filename_format.to_owned(), num = num, original = original)
+    }
+
+    pub fn lyx_filename(&self, num: usize) -> Result<String, formatx::Error> {
+        formatx!(self.lyx_filename_format.to_owned(), num = num)
+    }
 }

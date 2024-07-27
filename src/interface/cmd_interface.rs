@@ -1,5 +1,6 @@
 use super::Interface;
 use crate::files;
+use crate::config::Config;
 use std::io;
 use std::io::Write;
 
@@ -8,8 +9,8 @@ pub struct CmdInterface;
 impl Interface for CmdInterface {
     type Error = io::Error;
 
-    fn main() -> Result<(), Self::Error> {
-        let subject_paths: Vec<_> = files::get_subjects()?.collect();
+    fn main(config: &Config) -> Result<(), Self::Error> {
+        let subject_paths: Vec<_> = files::get_subjects(config)?.collect();
         let subjects: Vec<_> = subject_paths
             .iter()
             .filter_map(|path| path.file_name().and_then(|s| s.to_str()))
@@ -37,7 +38,7 @@ impl Interface for CmdInterface {
             io::stdout().flush()?;
         };
 
-        files::do_the_thing(subject_dir)?;
+        files::do_the_thing(config, subject_dir)?;
 
         Ok(())
     }

@@ -1,30 +1,23 @@
 use std::{
     fs, io,
     path::{Path, PathBuf},
+    collections::HashSet,
 };
-use std::collections::HashSet;
-use crate::config::{
-    DOWNLOADS_DIR,
-    SUBJECTS_DIR,
-    MAX_HW_DIRS,
-    LYX_TEMPLATE_FILE,
-    get_hw_dir,
-    get_questions_filname,
-    get_lyx_filename,
-};
+use crate::config::Config;
+
 
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
-pub fn do_the_thing(subject_dir: &Path) -> io::Result<()> {
-    let (num, hw_dir) = create_hw_dir(&subject_dir)?;
-    create_questions_file(num, &hw_dir)?;
-    create_lyx_file(num, &hw_dir)?;
+pub fn do_the_thing(config: &Config, subject_dir: &Path) -> io::Result<()> {
+    let (num, hw_dir) = create_hw_dir(config, subject_dir)?;
+    create_questions_file(config, num, &hw_dir)?;
+    create_lyx_file(config, num, &hw_dir)?;
     Ok(())
 }
 
 /// Get a list of available subjects
-pub fn get_subjects() -> io::Result<impl Iterator<Item = PathBuf>> {
-    Ok(list_dir(Path::new(SUBJECTS_DIR))?.filter(|path| path.is_dir()))
+pub fn get_subjects(config: &Config) -> io::Result<impl Iterator<Item = PathBuf>> {
+    Ok(list_dir(config.subjects_dir())?.filter(|path| path.is_dir()))
 }
 
 fn list_dir(dir: &Path) -> io::Result<impl Iterator<Item = PathBuf>> {
@@ -34,7 +27,7 @@ fn list_dir(dir: &Path) -> io::Result<impl Iterator<Item = PathBuf>> {
         .map(|entry| entry.path()))
 }
 
-fn create_hw_dir(subject_dir: &Path) -> io::Result<(usize, PathBuf)> {
+fn create_hw_dir(config: &Config, subject_dir: &Path) -> io::Result<(usize, PathBuf)> {
     // search for the next HW num
     let paths: Box<[_]> = list_dir(subject_dir)?.collect();
     let used_filenames: HashSet<_> = paths.iter()
@@ -43,35 +36,37 @@ fn create_hw_dir(subject_dir: &Path) -> io::Result<(usize, PathBuf)> {
                 .and_then(|s| s.to_str())
         )
         .collect();
-    let mut used_hw_num = (0..=MAX_HW_DIRS).rev()
-        .filter(|num| {
-            let filename = get_hw_dir(*num);
-            used_filenames.contains(&&*filename)
-        });
-    let num = used_hw_num.next().unwrap_or(0) + 1;
-    if num > MAX_HW_DIRS {
+    let num = 'num: {
+        for num in (0..=config.max_hw_dirs()).rev() {
+            let filename = config.hw_dir(num).map_err(io::Error::other)?;
+            if used_filenames.contains(&&*filename) {
+                break 'num num;
+            }
+        }
+        0
+    } + 1;
+    if num > config.max_hw_dirs() {
         return Err(io::Error::other("Maximum number of HW directories reached"));
     }
 
     let mut hw_dir = subject_dir.to_path_buf();
-    hw_dir.push(get_hw_dir(num));
+    hw_dir.push(config.hw_dir(num).map_err(io::Error::other)?);
     fs::create_dir(&hw_dir)?;
 
     Ok((num, hw_dir))
 }
 
-fn create_questions_file(num: usize, hw_dir: &Path) -> io::Result<()> {
-    let Some(downloads_dir) = DOWNLOADS_DIR else {
+fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> io::Result<()> {
+    let Some(downloads_dir) = config.downloads_dir() else {
         return Ok(());
     };
-    let downloads_dir = Path::new(downloads_dir);
 
     let questions_file_src = get_most_recent_download(&downloads_dir)?;
     let questions_file_src_filename = questions_file_src
         .file_name()
         .and_then(|s| s.to_str())
         .ok_or(io::Error::other("Most recent download has no filename"))?;
-    let questions_file_dest_filename = get_questions_filname(num, questions_file_src_filename);
+    let questions_file_dest_filename = config.questions_filename(num, questions_file_src_filename).map_err(io::Error::other)?;
     let mut questions_file_dest = hw_dir.to_path_buf();
     questions_file_dest.push(questions_file_dest_filename);
 
@@ -103,13 +98,13 @@ fn move_file(src: &Path, dest: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn create_lyx_file(num: usize, dir: &Path) -> io::Result<()> {
-    let Some(lyx_template) = LYX_TEMPLATE_FILE else {
+fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> io::Result<()> {
+    let Some(lyx_template) = config.lyx_template_file() else {
         return Ok(());
     };
 
     let mut lyx_file = dir.to_path_buf();
-    lyx_file.push(get_lyx_filename(num));
+    lyx_file.push(config.lyx_filename(num).map_err(io::Error::other)?);
 
     fs::copy(lyx_template, lyx_file)?;
 
