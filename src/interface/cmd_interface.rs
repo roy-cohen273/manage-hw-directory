@@ -1,6 +1,6 @@
 use super::Interface;
-use crate::files;
 use crate::config::Config;
+use crate::files;
 use std::io;
 use std::io::Write;
 

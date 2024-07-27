@@ -1,6 +1,6 @@
-use std::path::Path;
 use formatx::formatx;
 use serde::Deserialize;
+use std::path::Path;
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -35,7 +35,11 @@ impl Config {
     }
 
     pub fn questions_filename(&self, num: usize, original: &str) -> Result<String, formatx::Error> {
-        formatx!(self.questions_filename_format.to_owned(), num = num, original = original)
+        formatx!(
+            self.questions_filename_format.to_owned(),
+            num = num,
+            original = original,
+        )
     }
 
     pub fn lyx_filename(&self, num: usize) -> Result<String, formatx::Error> {

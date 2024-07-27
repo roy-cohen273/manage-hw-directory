@@ -1,10 +1,9 @@
+use crate::config::Config;
 use std::{
+    collections::HashSet,
     fs, io,
     path::{Path, PathBuf},
-    collections::HashSet,
 };
-use crate::config::Config;
-
 
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
@@ -30,11 +29,9 @@ fn list_dir(dir: &Path) -> io::Result<impl Iterator<Item = PathBuf>> {
 fn create_hw_dir(config: &Config, subject_dir: &Path) -> io::Result<(usize, PathBuf)> {
     // search for the next HW num
     let paths: Box<[_]> = list_dir(subject_dir)?.collect();
-    let used_filenames: HashSet<_> = paths.iter()
-        .filter_map(|path|
-            path.file_name()
-                .and_then(|s| s.to_str())
-        )
+    let used_filenames: HashSet<_> = paths
+        .iter()
+        .filter_map(|path| path.file_name().and_then(|s| s.to_str()))
         .collect();
     let num = 'num: {
         for num in (0..=config.max_hw_dirs()).rev() {
@@ -66,7 +63,9 @@ fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> io::Resu
         .file_name()
         .and_then(|s| s.to_str())
         .ok_or(io::Error::other("Most recent download has no filename"))?;
-    let questions_file_dest_filename = config.questions_filename(num, questions_file_src_filename).map_err(io::Error::other)?;
+    let questions_file_dest_filename = config
+        .questions_filename(num, questions_file_src_filename)
+        .map_err(io::Error::other)?;
     let mut questions_file_dest = hw_dir.to_path_buf();
     questions_file_dest.push(questions_file_dest_filename);
 
@@ -85,7 +84,10 @@ fn get_most_recent_download(downloads_directory: &Path) -> io::Result<PathBuf> {
             Some((entry, created))
         })
         .max_by_key(|(_entry, created)| *created)
-        .ok_or(io::Error::new(io::ErrorKind::NotFound, "downloads directory was empty"))?
+        .ok_or(io::Error::new(
+            io::ErrorKind::NotFound,
+            "downloads directory was empty",
+        ))?
         .0;
 
     Ok(most_recent_download.path())
