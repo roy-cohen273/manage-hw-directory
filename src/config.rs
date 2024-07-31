@@ -38,7 +38,7 @@ impl Config {
         formatx!(
             self.questions_filename_format.to_owned(),
             num = num,
-            original = original,
+            original = original
         )
     }
 
