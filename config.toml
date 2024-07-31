@@ -9,15 +9,18 @@
 # Path to the downloads directory.
 # This is the directory from which the last created file will be taken.
 downloads_dir = "./testing/downloads/"
+#downloads_dir = "C:\\Users\\Roy Cohen\\Downloads"
 
 # Path to the subjects directory.
 # This directory will contain a directory for each subject.
 subjects_dir = "testing/subjects"
+#subjects_dir = "G:\\My Drive"
 
 # Path to the LyX template file.
 # This file will be copied to the newly created HW directory.
 # If this behaviour is undesirable, set this to `None`.
 lyx_template_file = "testing/mytemplate.lyx"
+#lyx_template_file = "C:\\Users\\Roy Cohen\\LyX Templates\\mytemplate.lyx"
 
 # Maximum number of HW directories per subject
 max_hw_dirs = 100
@@ -38,6 +41,7 @@ hw_dir_format = "HW{num}"
 # * `original` -- The original name of the file in the downloads directory.
 # * `num` -- The HW number.
 questions_filename_format = "{original}_{num}"
+#questions_filename_format = "{original}"
 
 # A format specifier for the LyX file.
 # This format is used to create a new LyX file when creating a new HW directory.
