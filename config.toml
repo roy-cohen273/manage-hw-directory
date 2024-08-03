@@ -1,4 +1,4 @@
-# This file contains configuration values.
+# This file contains configuration values in TOML format.
 #
 # The config values that have `_FORMAT` at the end of their name are format specifiers.
 # They are used with the [`format!`] macro. See the [`format!`] documentation for syntax.
@@ -6,24 +6,10 @@
 # Do not use positional arguments, or named arguments that are not from that list.
 # Otherwise, you will get confusing error messages.
 
-# Path to the downloads directory.
-# This is the directory from which the last created file will be taken.
-downloads_dir = "./testing/downloads/"
-#downloads_dir = "C:\\Users\\Roy Cohen\\Downloads"
-
 # Path to the subjects directory.
 # This directory will contain a directory for each subject.
 subjects_dir = "testing/subjects"
 #subjects_dir = "G:\\My Drive"
-
-# Path to the LyX template file.
-# This file will be copied to the newly created HW directory.
-# If this behaviour is undesirable, set this to `None`.
-lyx_template_file = "testing/mytemplate.lyx"
-#lyx_template_file = "C:\\Users\\Roy Cohen\\LyX Templates\\mytemplate.lyx"
-
-# Maximum number of HW directories per subject
-max_hw_dirs = 100
 
 # A format specifier for the HW directory.
 # This format is used to search for existing HW directories and to create new HW directories.
@@ -32,10 +18,21 @@ max_hw_dirs = 100
 # * `num` -- The HW number.
 hw_dir_format = "HW{num}"
 
+# Maximum number of HW directories per subject.
+max_hw_dirs = 100
+
+# Optional subtable containing configurations regarding the questions file.
+# If this subtable is ommited, a questions file will not be created.
+[questions_file]
+
+# Path to the downloads directory.
+# This is the directory from which the last created file will be taken.
+downloads_dir = "./testing/downloads/"
+#downloads_dir = "C:\\Users\\Roy Cohen\\Downloads"
+
 # A format specifier for the questions file.
 # This format is used to create the questions file when creating a new HW directory.
-# (The question file is moved from the most recent file in the downloads directory,
-# see [`DOWNLOADS_DIR`]. If it is `None`, no question file is created, and this value is ignored).
+# (The question file is moved from the most recent file in the downloads directory, see `downloads_dir`).
 #
 # Named arguments:
 # * `original` -- The original name of the file in the downloads directory.
@@ -43,10 +40,20 @@ hw_dir_format = "HW{num}"
 questions_filename_format = "{original}_{num}"
 #questions_filename_format = "{original}"
 
+# Optional subtable containing configurations regarding the LyX file.
+# If this subtable is ommited, a LyX file will not be created.
+[lyx_file]
+
+# Optional path to the LyX template file.
+# This file will be copied to the newly created HW directory.
+# If this value is ommited, a new empty LyX file will be created.
+lyx_template_file = "testing/mytemplate.lyx"
+#lyx_template_file = "C:\\Users\\Roy Cohen\\LyX Templates\\mytemplate.lyx"
+
 # A format specifier for the LyX file.
 # This format is used to create a new LyX file when creating a new HW directory.
-# (The contents of the newly created LyX file will be copied from [`LYX_TEMPLATE_FILE`],
-# unless it is `None`, in which case no new LyX file is created, and this value is ignored).
+# (The contents of the newly created LyX file will be copied from `lyx_template_file`,
+# unless it is ommited, in which case an empty file will be created).
 #
 # Named arguments:
 # * `num` -- The HW number.

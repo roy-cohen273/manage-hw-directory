@@ -53,16 +53,16 @@ fn create_hw_dir(config: &Config, subject_dir: &Path) -> io::Result<(usize, Path
 }
 
 fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> io::Result<()> {
-    let Some(downloads_dir) = config.downloads_dir() else {
+    let Some(questions_file_config) = config.questions_file_config() else {
         return Ok(());
     };
 
-    let questions_file_src = get_most_recent_download(&downloads_dir)?;
+    let questions_file_src = get_most_recent_download(&questions_file_config.downloads_dir())?;
     let questions_file_src_filename = questions_file_src
         .file_name()
         .and_then(|s| s.to_str())
         .ok_or(io::Error::other("Most recent download has no filename"))?;
-    let questions_file_dest_filename = config
+    let questions_file_dest_filename = questions_file_config
         .questions_filename(num, questions_file_src_filename)
         .map_err(io::Error::other)?;
     let questions_file_dest = hw_dir.join(questions_file_dest_filename);
@@ -99,13 +99,21 @@ fn move_file(src: &Path, dest: &Path) -> io::Result<()> {
 }
 
 fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> io::Result<()> {
-    let Some(lyx_template) = config.lyx_template_file() else {
+    let Some(lyx_file_config) = config.lyx_file_config() else {
         return Ok(());
     };
 
-    let lyx_file = dir.join(config.lyx_filename(num).map_err(io::Error::other)?);
+    let lyx_file = dir.join(
+        lyx_file_config
+            .lyx_filename(num)
+            .map_err(io::Error::other)?,
+    );
 
-    fs::copy(lyx_template, lyx_file)?;
+    if let Some(lyx_template) = lyx_file_config.lyx_template_file() {
+        fs::copy(lyx_template, lyx_file)?;
+    } else {
+        fs::File::create(lyx_file)?;
+    }
 
     Ok(())
 }

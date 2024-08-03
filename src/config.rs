@@ -1,37 +1,59 @@
+use std::path::Path;
+
 use formatx::formatx;
 use serde::Deserialize;
-use std::path::Path;
 
 #[derive(Deserialize)]
 pub struct Config {
-    downloads_dir: Option<Box<Path>>,
+    // mandatory:
     subjects_dir: Box<Path>,
-    max_hw_dirs: usize,
-    lyx_template_file: Option<Box<Path>>,
     hw_dir_format: Box<str>,
+    max_hw_dirs: usize,
+
+    // questions file:
+    questions_file: Option<QuestionsFileConfig>,
+
+    // LyX file:
+    lyx_file: Option<LyxFileConfig>,
+}
+
+#[derive(Deserialize)]
+pub struct QuestionsFileConfig {
+    downloads_dir: Box<Path>,
     questions_filename_format: Box<str>,
+}
+
+#[derive(Deserialize)]
+pub struct LyxFileConfig {
+    lyx_template_file: Option<Box<Path>>,
     lyx_filename_format: Box<str>,
 }
 
 impl Config {
-    pub fn downloads_dir(&self) -> Option<&Path> {
-        self.downloads_dir.as_deref()
-    }
-
     pub fn subjects_dir(&self) -> &Path {
         &self.subjects_dir
+    }
+
+    pub fn hw_dir(&self, num: usize) -> Result<String, formatx::Error> {
+        formatx!(self.hw_dir_format.to_owned(), num = num)
     }
 
     pub fn max_hw_dirs(&self) -> usize {
         self.max_hw_dirs
     }
 
-    pub fn lyx_template_file(&self) -> Option<&Path> {
-        self.lyx_template_file.as_deref()
+    pub fn questions_file_config(&self) -> Option<&QuestionsFileConfig> {
+        self.questions_file.as_ref()
     }
 
-    pub fn hw_dir(&self, num: usize) -> Result<String, formatx::Error> {
-        formatx!(self.hw_dir_format.to_owned(), num = num)
+    pub fn lyx_file_config(&self) -> Option<&LyxFileConfig> {
+        self.lyx_file.as_ref()
+    }
+}
+
+impl QuestionsFileConfig {
+    pub fn downloads_dir(&self) -> &Path {
+        &self.downloads_dir
     }
 
     pub fn questions_filename(&self, num: usize, original: &str) -> Result<String, formatx::Error> {
@@ -40,6 +62,12 @@ impl Config {
             num = num,
             original = original
         )
+    }
+}
+
+impl LyxFileConfig {
+    pub fn lyx_template_file(&self) -> Option<&Path> {
+        self.lyx_template_file.as_deref()
     }
 
     pub fn lyx_filename(&self, num: usize) -> Result<String, formatx::Error> {
