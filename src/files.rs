@@ -46,8 +46,7 @@ fn create_hw_dir(config: &Config, subject_dir: &Path) -> io::Result<(usize, Path
         return Err(io::Error::other("Maximum number of HW directories reached"));
     }
 
-    let mut hw_dir = subject_dir.to_path_buf();
-    hw_dir.push(config.hw_dir(num).map_err(io::Error::other)?);
+    let hw_dir = subject_dir.join(config.hw_dir(num).map_err(io::Error::other)?);
     fs::create_dir(&hw_dir)?;
 
     Ok((num, hw_dir))
@@ -66,8 +65,7 @@ fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> io::Resu
     let questions_file_dest_filename = config
         .questions_filename(num, questions_file_src_filename)
         .map_err(io::Error::other)?;
-    let mut questions_file_dest = hw_dir.to_path_buf();
-    questions_file_dest.push(questions_file_dest_filename);
+    let questions_file_dest = hw_dir.join(questions_file_dest_filename);
 
     move_file(&questions_file_src, &questions_file_dest)?;
 
@@ -105,8 +103,7 @@ fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> io::Result<()> {
         return Ok(());
     };
 
-    let mut lyx_file = dir.to_path_buf();
-    lyx_file.push(config.lyx_filename(num).map_err(io::Error::other)?);
+    let lyx_file = dir.join(config.lyx_filename(num).map_err(io::Error::other)?);
 
     fs::copy(lyx_template, lyx_file)?;
 
