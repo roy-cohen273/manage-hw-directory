@@ -110,8 +110,25 @@ fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> io::Result<()> {
     );
 
     if let Some(lyx_template) = lyx_file_config.lyx_template_file() {
-        fs::copy(lyx_template, lyx_file)?;
+        if lyx_file_config.replacements().is_empty() {
+            // copy from LyX template file. no replacements.
+            fs::copy(lyx_template, lyx_file)?;
+        } else {
+            // copy from LyX template file with replacements.
+            let mut data = fs::read_to_string(lyx_template)?;
+            for replace in lyx_file_config.replacements() {
+                let from = replace.from();
+                let to = replace.to(num).map_err(io::Error::other)?;
+                data = if let Some(count) = replace.count() {
+                    data.replacen(from, &to, count)
+                } else {
+                    data.replace(from, &to)
+                }
+            }
+            fs::write(lyx_file, data)?;
+        }
     } else {
+        // create a new empty file
         fs::File::create(lyx_file)?;
     }
 

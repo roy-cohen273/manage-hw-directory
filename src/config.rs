@@ -27,6 +27,14 @@ pub struct QuestionsFileConfig {
 pub struct LyxFileConfig {
     lyx_template_file: Option<Box<Path>>,
     lyx_filename_format: Box<str>,
+    replacements: Box<[LyxReplacementConfig]>,
+}
+
+#[derive(Deserialize)]
+pub struct LyxReplacementConfig {
+    from: Box<str>,
+    to_format: Box<str>,
+    count: Option<usize>,
 }
 
 impl Config {
@@ -72,5 +80,23 @@ impl LyxFileConfig {
 
     pub fn lyx_filename(&self, num: usize) -> Result<String, formatx::Error> {
         formatx!(self.lyx_filename_format.to_owned(), num = num)
+    }
+
+    pub fn replacements(&self) -> &[LyxReplacementConfig] {
+        &self.replacements
+    }
+}
+
+impl LyxReplacementConfig {
+    pub fn from(&self) -> &str {
+        &self.from
+    }
+
+    pub fn to(&self, num: usize) -> Result<String, formatx::Error> {
+        formatx!(self.to_format.to_owned(), num = num)
+    }
+
+    pub fn count(&self) -> Option<usize> {
+        self.count
     }
 }

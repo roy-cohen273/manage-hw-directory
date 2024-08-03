@@ -1,6 +1,6 @@
 # This file contains configuration values in TOML format.
 #
-# The config values that have `_FORMAT` at the end of their name are format specifiers.
+# The config values that have `_format` at the end of their name are format specifiers.
 # They are used with the [`format!`] macro. See the [`format!`] documentation for syntax.
 # Each format specifier has a list of named arguments it can use.
 # Do not use positional arguments, or named arguments that are not from that list.
@@ -58,3 +58,22 @@ lyx_template_file = "testing/mytemplate.lyx"
 # Named arguments:
 # * `num` -- The HW number.
 lyx_filename_format = "HW{num}.lyx"
+
+# Optional subarray containing configurations regarding find-and-replace in the LyX file.
+# Each entry in this array describes a single replacement operation.
+# Note that if this array is not empty, the entire contents of the LyX template file will be copied to memory.
+# This shouldn't be a problem unless your LyX template file is huge.
+[[lyx_file.replacements]]
+
+# The string to replace
+from = "000"
+
+# The string to replace with. This is a format specifier.
+#
+# Named arguments:
+# * `num` -- The HW number.
+to_format = "{num}"
+
+# Optional: Replace only the first `count` appearances.
+# If ommited, all appearances will be replaced.
+count = 1

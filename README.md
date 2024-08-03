@@ -11,7 +11,7 @@ A tool for managing homework (HW) folders.
         In most use cases, the `HW_DIR_FORMAT` would be `{subject_dir}/...`.
 * [x] Move the questions file into the HW directory.
 * [x] Copy the LyX template into the HW directory.
-* [ ] Substitute parameters into the LyX file.
+* [x] Substitute parameters into the LyX file.
 * [ ] Open an HW directory:
   * [ ] Open the questions file (e.g. using chrome).
   * [ ] Open the LyX file (using LyX).
