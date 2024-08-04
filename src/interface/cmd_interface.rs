@@ -7,9 +7,7 @@ use std::io::Write;
 pub struct CmdInterface;
 
 impl Interface for CmdInterface {
-    type Error = io::Error;
-
-    fn main(config: &Config) -> Result<(), Self::Error> {
+    fn main(config: &Config) -> anyhow::Result<()> {
         let subject_paths: Vec<_> = files::get_subjects(config)?.collect();
         let subjects: Vec<_> = subject_paths
             .iter()

@@ -1,13 +1,14 @@
-use crate::config::Config;
 use std::{
     collections::HashSet,
-    fs, io,
+    fs,
     path::{Path, PathBuf},
 };
 
+use crate::config::Config;
+
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
-pub fn do_the_thing(config: &Config, subject_dir: &Path) -> io::Result<()> {
+pub fn do_the_thing(config: &Config, subject_dir: &Path) -> anyhow::Result<()> {
     let (num, hw_dir) = create_hw_dir(config, subject_dir)?;
     create_questions_file(config, num, &hw_dir)?;
     create_lyx_file(config, num, &hw_dir)?;
@@ -15,18 +16,18 @@ pub fn do_the_thing(config: &Config, subject_dir: &Path) -> io::Result<()> {
 }
 
 /// Get a list of available subjects
-pub fn get_subjects(config: &Config) -> io::Result<impl Iterator<Item = PathBuf>> {
+pub fn get_subjects(config: &Config) -> anyhow::Result<impl Iterator<Item = PathBuf>> {
     Ok(list_dir(config.subjects_dir())?.filter(|path| path.is_dir()))
 }
 
-fn list_dir(dir: &Path) -> io::Result<impl Iterator<Item = PathBuf>> {
+fn list_dir(dir: &Path) -> anyhow::Result<impl Iterator<Item = PathBuf>> {
     Ok(dir
         .read_dir()?
         .filter_map(Result::ok)
         .map(|entry| entry.path()))
 }
 
-fn create_hw_dir(config: &Config, subject_dir: &Path) -> io::Result<(usize, PathBuf)> {
+fn create_hw_dir(config: &Config, subject_dir: &Path) -> anyhow::Result<(usize, PathBuf)> {
     // search for the next HW num
     let paths: Box<[_]> = list_dir(subject_dir)?.collect();
     let used_filenames: HashSet<_> = paths
@@ -35,7 +36,7 @@ fn create_hw_dir(config: &Config, subject_dir: &Path) -> io::Result<(usize, Path
         .collect();
     let num = 'num: {
         for num in (0..=config.max_hw_dirs()).rev() {
-            let filename = config.hw_dir(num).map_err(io::Error::other)?;
+            let filename = config.hw_dir(num)?;
             if used_filenames.contains(&&*filename) {
                 break 'num num;
             }
@@ -43,28 +44,27 @@ fn create_hw_dir(config: &Config, subject_dir: &Path) -> io::Result<(usize, Path
         0
     } + 1;
     if num > config.max_hw_dirs() {
-        return Err(io::Error::other("Maximum number of HW directories reached"));
+        anyhow::bail!("Maximum number of HW directories reached");
     }
 
-    let hw_dir = subject_dir.join(config.hw_dir(num).map_err(io::Error::other)?);
+    let hw_dir = subject_dir.join(config.hw_dir(num)?);
     fs::create_dir(&hw_dir)?;
 
     Ok((num, hw_dir))
 }
 
-fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> io::Result<()> {
+fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> anyhow::Result<()> {
     let Some(questions_file_config) = config.questions_file_config() else {
         return Ok(());
     };
 
-    let questions_file_src = get_most_recent_download(&questions_file_config.downloads_dir())?;
+    let questions_file_src = get_most_recent_download(questions_file_config.downloads_dir())?;
     let questions_file_src_filename = questions_file_src
         .file_name()
         .and_then(|s| s.to_str())
-        .ok_or(io::Error::other("Most recent download has no filename"))?;
-    let questions_file_dest_filename = questions_file_config
-        .questions_filename(num, questions_file_src_filename)
-        .map_err(io::Error::other)?;
+        .ok_or(anyhow::anyhow!("Most recent download has no filename"))?;
+    let questions_file_dest_filename =
+        questions_file_config.questions_filename(num, questions_file_src_filename)?;
     let questions_file_dest = hw_dir.join(questions_file_dest_filename);
 
     move_file(&questions_file_src, &questions_file_dest)?;
@@ -72,7 +72,7 @@ fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> io::Resu
     Ok(())
 }
 
-fn get_most_recent_download(downloads_directory: &Path) -> io::Result<PathBuf> {
+fn get_most_recent_download(downloads_directory: &Path) -> anyhow::Result<PathBuf> {
     let most_recent_download = downloads_directory
         .read_dir()?
         .filter_map(Result::ok)
@@ -82,32 +82,25 @@ fn get_most_recent_download(downloads_directory: &Path) -> io::Result<PathBuf> {
             Some((entry, created))
         })
         .max_by_key(|(_entry, created)| *created)
-        .ok_or(io::Error::new(
-            io::ErrorKind::NotFound,
-            "downloads directory was empty",
-        ))?
+        .ok_or(anyhow::anyhow!("downloads directory was empty"))?
         .0;
 
     Ok(most_recent_download.path())
 }
 
-fn move_file(src: &Path, dest: &Path) -> io::Result<()> {
+fn move_file(src: &Path, dest: &Path) -> anyhow::Result<()> {
     fs::copy(src, dest)?;
     fs::remove_file(src)?;
 
     Ok(())
 }
 
-fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> io::Result<()> {
+fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> anyhow::Result<()> {
     let Some(lyx_file_config) = config.lyx_file_config() else {
         return Ok(());
     };
 
-    let lyx_file = dir.join(
-        lyx_file_config
-            .lyx_filename(num)
-            .map_err(io::Error::other)?,
-    );
+    let lyx_file = dir.join(lyx_file_config.lyx_filename(num)?);
 
     if let Some(lyx_template) = lyx_file_config.lyx_template_file() {
         if lyx_file_config.replacements().is_empty() {
@@ -118,7 +111,7 @@ fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> io::Result<()> {
             let mut data = fs::read_to_string(lyx_template)?;
             for replace in lyx_file_config.replacements() {
                 let from = replace.from();
-                let to = replace.to(num).map_err(io::Error::other)?;
+                let to = replace.to(num)?;
                 data = if let Some(count) = replace.count() {
                     data.replacen(from, &to, count)
                 } else {
