@@ -21,9 +21,8 @@ A tool for managing homework (HW) folders.
 ### Commandline Frontend
 * [x] Display list of subjects.
 * [x] Pick a subject.
-  * [ ] Accept incomplete name fo a subject.
-        e.g. if the user types `"Algo"` it should be recognized as `"Algorithms"`.
-* [ ] Open the last HW directory in a subject.
+  * [x] Accept index in the subjects list instead of full name.
+* [x] Open the last HW directory in a subject.
 
 ### TUI Frontend
 Not currently under development.

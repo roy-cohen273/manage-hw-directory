@@ -9,7 +9,7 @@ use crate::config::Config;
 
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
-pub fn do_the_thing(config: &Config, subject_dir: &Path) -> anyhow::Result<()> {
+pub fn create_new_hw_dir(config: &Config, subject_dir: &Path) -> anyhow::Result<()> {
     let (num, hw_dir) = create_hw_dir(config, subject_dir)?;
     create_questions_file(config, num, &hw_dir)?;
     create_lyx_file(config, num, &hw_dir)?;
@@ -24,6 +24,14 @@ pub fn get_subjects(config: &Config) -> anyhow::Result<impl Iterator<Item = Path
     Ok(list_dir(config.subjects_dir())?.filter(|path| path.is_dir()))
 }
 
+pub fn open_last_hw_dir(config: &Config, subject_dir: &Path) -> anyhow::Result<()> {
+    let num = get_last_hw_num(config, subject_dir)?;
+    let hw_dir = subject_dir.join(config.hw_dir(num)?);
+    open_hw_dir(config, &hw_dir, num)?;
+
+    Ok(())
+}
+
 fn list_dir(dir: &Path) -> anyhow::Result<impl Iterator<Item = PathBuf>> {
     Ok(dir
         .read_dir()?
@@ -31,22 +39,24 @@ fn list_dir(dir: &Path) -> anyhow::Result<impl Iterator<Item = PathBuf>> {
         .map(|entry| entry.path()))
 }
 
-fn create_hw_dir(config: &Config, subject_dir: &Path) -> anyhow::Result<(usize, PathBuf)> {
+fn get_last_hw_num(config: &Config, subject_dir: &Path) -> anyhow::Result<usize> {
     // search for the next HW num
     let paths: Box<[_]> = list_dir(subject_dir)?.collect();
     let used_filenames: HashSet<_> = paths
         .iter()
         .filter_map(|path| path.file_name().and_then(|s| s.to_str()))
         .collect();
-    let num = 'num: {
-        for num in (0..=config.max_hw_dirs()).rev() {
-            let filename = config.hw_dir(num)?;
-            if used_filenames.contains(&&*filename) {
-                break 'num num;
-            }
+    for num in (0..=config.max_hw_dirs()).rev() {
+        let filename = config.hw_dir(num)?;
+        if used_filenames.contains(&&*filename) {
+            return Ok(num);
         }
-        0
-    } + 1;
+    }
+    Ok(0)
+}
+
+fn create_hw_dir(config: &Config, subject_dir: &Path) -> anyhow::Result<(usize, PathBuf)> {
+    let num = get_last_hw_num(config, subject_dir)? + 1;
     if num > config.max_hw_dirs() {
         anyhow::bail!("Maximum number of HW directories reached");
     }
