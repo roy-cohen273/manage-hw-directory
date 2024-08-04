@@ -21,6 +21,9 @@ hw_dir_format = "HW{num}"
 # Maximum number of HW directories per subject.
 max_hw_dirs = 100
 
+# Open the newly created HW directory.
+open_after_creation = true
+
 # Optional subtable containing configurations regarding the questions file.
 # If this subtable is ommited, a questions file will not be created.
 [questions_file]
@@ -35,10 +38,22 @@ downloads_dir = "./testing/downloads/"
 # (The question file is moved from the most recent file in the downloads directory, see `downloads_dir`).
 #
 # Named arguments:
-# * `original` -- The original name of the file in the downloads directory.
 # * `num` -- The HW number.
-questions_filename_format = "{original}_{num}"
-#questions_filename_format = "{original}"
+questions_filename_format = "questions_{num}.html"
+#questions_filename_format = "questions.pdf"
+
+# Optional subtable containing configuratio regarding how to open the questions file.
+# If ommited, the questions file will not be opened.
+[questions_file.open]
+
+# Name (or path) of the program used to open the questions file.
+binary = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
+
+# Array of arguments to be passed to the binary. Each element is a format specifier.
+#
+# Named arguments:
+# * `questions_file` -- The full path to the questions file.
+args_format = [ "file:///{questions_file}", ]
 
 # Optional subtable containing configurations regarding the LyX file.
 # If this subtable is ommited, a LyX file will not be created.

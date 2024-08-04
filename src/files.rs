@@ -2,6 +2,7 @@ use std::{
     collections::HashSet,
     fs,
     path::{Path, PathBuf},
+    process::{self, Command},
 };
 
 use crate::config::Config;
@@ -12,6 +13,9 @@ pub fn do_the_thing(config: &Config, subject_dir: &Path) -> anyhow::Result<()> {
     let (num, hw_dir) = create_hw_dir(config, subject_dir)?;
     create_questions_file(config, num, &hw_dir)?;
     create_lyx_file(config, num, &hw_dir)?;
+    if config.open_after_creation() {
+        open_hw_dir(config, &hw_dir, num)?;
+    }
     Ok(())
 }
 
@@ -59,13 +63,7 @@ fn create_questions_file(config: &Config, num: usize, hw_dir: &Path) -> anyhow::
     };
 
     let questions_file_src = get_most_recent_download(questions_file_config.downloads_dir())?;
-    let questions_file_src_filename = questions_file_src
-        .file_name()
-        .and_then(|s| s.to_str())
-        .ok_or(anyhow::anyhow!("Most recent download has no filename"))?;
-    let questions_file_dest_filename =
-        questions_file_config.questions_filename(num, questions_file_src_filename)?;
-    let questions_file_dest = hw_dir.join(questions_file_dest_filename);
+    let questions_file_dest = hw_dir.join(questions_file_config.questions_filename(num)?);
 
     move_file(&questions_file_src, &questions_file_dest)?;
 
@@ -124,6 +122,35 @@ fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> anyhow::Result<()
         // create a new empty file
         fs::File::create(lyx_file)?;
     }
+
+    Ok(())
+}
+
+fn open_hw_dir(config: &Config, hw_dir: &Path, num: usize) -> anyhow::Result<()> {
+    open_questions_file(config, hw_dir, num)?;
+
+    Ok(())
+}
+
+fn open_questions_file(config: &Config, hw_dir: &Path, num: usize) -> anyhow::Result<()> {
+    let Some(questions_file_config) = config.questions_file_config() else {
+        return Ok(());
+    };
+    let Some(open_config) = questions_file_config.open_config() else {
+        return Ok(());
+    };
+
+    let questions_file = hw_dir.join(questions_file_config.questions_filename(num)?);
+
+    let mut command = Command::new(open_config.binary());
+
+    command.args(open_config.args(&questions_file)?);
+
+    command.stdin(process::Stdio::null());
+    command.stdout(process::Stdio::null());
+    command.stderr(process::Stdio::null());
+
+    command.spawn()?;
 
     Ok(())
 }
