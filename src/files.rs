@@ -5,7 +5,10 @@ use std::{
     process::{self, Command},
 };
 
-use crate::config::{Config, Formattable, OpenConfig};
+use crate::config::{
+    open_config::{Formattable, OpenConfig},
+    Config,
+};
 
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
