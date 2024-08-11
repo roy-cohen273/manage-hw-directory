@@ -5,7 +5,7 @@ use std::{
     process::{self, Command},
 };
 
-use crate::config::Config;
+use crate::config::{Config, Formattable, OpenConfig};
 
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
@@ -138,8 +138,23 @@ fn create_lyx_file(config: &Config, num: usize, dir: &Path) -> anyhow::Result<()
 
 fn open_hw_dir(config: &Config, hw_dir: &Path, num: usize) -> anyhow::Result<()> {
     open_questions_file(config, hw_dir, num)?;
+    open_lyx_file(config, hw_dir, num)?;
 
     Ok(())
+}
+
+fn open_from_config<T: Formattable>(
+    open_config: &OpenConfig<T>,
+    params: &T::Params,
+) -> anyhow::Result<()> {
+    Command::new(open_config.binary())
+        .args(open_config.args(params)?)
+        .stdin(process::Stdio::null())
+        .stdout(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .spawn()
+        .map(|_child| ()) // ignore child process
+        .map_err(Into::into)
 }
 
 fn open_questions_file(config: &Config, hw_dir: &Path, num: usize) -> anyhow::Result<()> {
@@ -152,15 +167,22 @@ fn open_questions_file(config: &Config, hw_dir: &Path, num: usize) -> anyhow::Re
 
     let questions_file = hw_dir.join(questions_file_config.questions_filename(num)?);
 
-    let mut command = Command::new(open_config.binary());
+    open_from_config(open_config, &questions_file)?;
 
-    command.args(open_config.args(&questions_file)?);
+    Ok(())
+}
 
-    command.stdin(process::Stdio::null());
-    command.stdout(process::Stdio::null());
-    command.stderr(process::Stdio::null());
+fn open_lyx_file(config: &Config, hw_dir: &Path, num: usize) -> anyhow::Result<()> {
+    let Some(lyx_file_config) = config.lyx_file_config() else {
+        return Ok(());
+    };
+    let Some(open_config) = lyx_file_config.open_config() else {
+        return Ok(());
+    };
 
-    command.spawn()?;
+    let lyx_filename = hw_dir.join(lyx_file_config.lyx_filename(num)?);
+
+    open_from_config(open_config, &lyx_filename)?;
 
     Ok(())
 }

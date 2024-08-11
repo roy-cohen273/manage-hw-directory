@@ -1,5 +1,7 @@
+use anyhow::anyhow;
 use formatx::formatx;
 use serde::Deserialize;
+use std::marker::PhantomData;
 use std::path::{self, Path};
 
 #[derive(Deserialize)]
@@ -22,7 +24,7 @@ pub struct QuestionsFileConfig {
     downloads_dir: Box<Path>,
     questions_filename_format: Box<str>,
 
-    open: Option<OpenQuestionsConfig>,
+    open: Option<OpenConfig<QuestionsFile>>,
 }
 
 #[derive(Deserialize)]
@@ -30,6 +32,8 @@ pub struct LyxFileConfig {
     lyx_template_file: Option<Box<Path>>,
     lyx_filename_format: Box<str>,
     replacements: Box<[LyxReplacementConfig]>,
+
+    open: Option<OpenConfig<LyxFile>>,
 }
 
 #[derive(Deserialize)]
@@ -39,10 +43,47 @@ pub struct LyxReplacementConfig {
     count: Option<usize>,
 }
 
+pub trait Formattable {
+    type Params: ?Sized;
+
+    fn format(s: String, params: &Self::Params) -> anyhow::Result<String>;
+}
+
 #[derive(Deserialize)]
-pub struct OpenQuestionsConfig {
+pub struct OpenConfig<T: Formattable> {
     binary: Box<str>,
     args_format: Box<[Box<str>]>,
+
+    #[serde(skip)]
+    _phantom: PhantomData<T>,
+}
+
+pub struct QuestionsFile;
+impl Formattable for QuestionsFile {
+    type Params = Path;
+
+    fn format(s: String, questions_file: &Path) -> anyhow::Result<String> {
+        let absolute_questions_file = path::absolute(questions_file)?;
+        let questions_file = absolute_questions_file
+            .to_str()
+            .ok_or(anyhow::anyhow!("cannot convert questions file to string"))?;
+
+        formatx!(s, questions_file = questions_file).map_err(Into::into)
+    }
+}
+
+pub struct LyxFile;
+impl Formattable for LyxFile {
+    type Params = Path;
+
+    fn format(s: String, lyx_file: &Path) -> anyhow::Result<String> {
+        let absolute_lyx_file = path::absolute(lyx_file)?;
+        let lyx_file = absolute_lyx_file
+            .to_str()
+            .ok_or(anyhow!("cannot convert LyX file to string"))?;
+
+        formatx!(s, lyx_file = lyx_file).map_err(Into::into)
+    }
 }
 
 impl Config {
@@ -80,7 +121,7 @@ impl QuestionsFileConfig {
         formatx!(self.questions_filename_format.to_owned(), num = num)
     }
 
-    pub fn open_config(&self) -> Option<&OpenQuestionsConfig> {
+    pub fn open_config(&self) -> Option<&OpenConfig<QuestionsFile>> {
         self.open.as_ref()
     }
 }
@@ -96,6 +137,10 @@ impl LyxFileConfig {
 
     pub fn replacements(&self) -> &[LyxReplacementConfig] {
         &self.replacements
+    }
+
+    pub fn open_config(&self) -> Option<&OpenConfig<LyxFile>> {
+        self.open.as_ref()
     }
 }
 
@@ -113,23 +158,15 @@ impl LyxReplacementConfig {
     }
 }
 
-impl OpenQuestionsConfig {
+impl<T: Formattable> OpenConfig<T> {
     pub fn binary(&self) -> &str {
         &self.binary
     }
 
-    pub fn args<'a>(
-        &'a self,
-        questions_file: &'a Path,
-    ) -> anyhow::Result<impl Iterator<Item = String>> {
-        let absolute_questions_file = path::absolute(questions_file)?;
-        let questions_file = absolute_questions_file
-            .to_str()
-            .ok_or(anyhow::anyhow!("cannot convert questions file to string"))?;
-
+    pub fn args(&self, params: &T::Params) -> anyhow::Result<impl Iterator<Item = String>> {
         self.args_format
             .iter()
-            .map(|arg_format| formatx!(arg_format.to_owned(), questions_file = questions_file))
+            .map(|arg_format| T::format(arg_format.to_string(), params))
             .collect::<Result<Vec<_>, _>>()
             .map_err(Into::into)
             .map(IntoIterator::into_iter)

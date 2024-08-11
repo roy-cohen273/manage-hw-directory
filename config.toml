@@ -39,10 +39,10 @@ downloads_dir = "./testing/downloads/"
 #
 # Named arguments:
 # * `num` -- The HW number.
-questions_filename_format = "questions_{num}.html"
+questions_filename_format = "questions_{num}.pdf"
 #questions_filename_format = "questions.pdf"
 
-# Optional subtable containing configuratio regarding how to open the questions file.
+# Optional subtable containing configuration regarding how to open the questions file.
 # If ommited, the questions file will not be opened.
 [questions_file.open]
 
@@ -81,7 +81,7 @@ lyx_filename_format = "HW{num}.lyx"
 [[lyx_file.replacements]]
 
 # The string to replace
-from = "000"
+from = "0000"
 
 # The string to replace with. This is a format specifier.
 #
@@ -92,3 +92,17 @@ to_format = "{num}"
 # Optional: Replace only the first `count` appearances.
 # If ommited, all appearances will be replaced.
 count = 1
+
+# Optional subtable containing configuration regarding how to open the LyX file.
+# If ommited, the LyX file will not be opened.
+[lyx_file.open]
+
+# Name (or path) of the program used to open the LyX file.
+binary = 'C:\Program Files\LyX 2.3\bin\LyX.exe'
+
+# Array of arguments to be passed to the binary. Each element is a format specifier.
+#
+# Named arguments:
+# * `lyx_file` -- The full path to the LyX file.
+args_format = [ "-x", "command-sequence buffer-end; buffer-view", "{lyx_file}" ]
+

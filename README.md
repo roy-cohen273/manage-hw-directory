@@ -12,9 +12,9 @@ A tool for managing homework (HW) folders.
 * [x] Move the questions file into the HW directory.
 * [x] Copy the LyX template into the HW directory.
 * [x] Substitute parameters into the LyX file.
-* [ ] Open an HW directory:
+* [x] Open an HW directory:
   * [x] Open the questions file (e.g. using chrome).
-  * [ ] Open the LyX file (using LyX).
+  * [x] Open the LyX file (using LyX).
 * [ ] Better parameterization in general.
   * [ ] Hebrew names for subjects.
 
