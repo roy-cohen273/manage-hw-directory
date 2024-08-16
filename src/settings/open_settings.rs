@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 pub trait Formattable {
@@ -7,8 +7,8 @@ pub trait Formattable {
     fn format(s: String, params: &Self::Params) -> anyhow::Result<String>;
 }
 
-#[derive(Deserialize)]
-pub struct OpenConfig<T: Formattable> {
+#[derive(Serialize, Deserialize)]
+pub struct OpenSettings<T: Formattable> {
     binary: Box<str>,
     args_format: Box<[Box<str>]>,
 
@@ -16,7 +16,7 @@ pub struct OpenConfig<T: Formattable> {
     _phantom: PhantomData<T>,
 }
 
-impl<T: Formattable> OpenConfig<T> {
+impl<T: Formattable> OpenSettings<T> {
     pub fn binary(&self) -> &str {
         &self.binary
     }

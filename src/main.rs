@@ -1,20 +1,18 @@
-use std::fs;
-
-use config::Config;
+use config::File;
 use interface::CmdInterface;
 use interface::Interface;
+use settings::Settings;
 
-mod config;
 mod files;
 mod interface;
+mod settings;
 
-const CONFIG_FILE: &str = "config.toml";
+const SETTINGS_FILE: &str = "settings.json5";
 
 fn main() -> anyhow::Result<()> {
-    let config_str = fs::read_to_string(CONFIG_FILE)?;
-    let config: Config = toml::from_str(&config_str)?;
+    let settings = Settings::new([File::with_name(SETTINGS_FILE)])?;
 
-    match CmdInterface::main(&config) {
+    match CmdInterface::main(&settings) {
         Ok(()) => {}
         Err(e) => {
             eprintln!("ERROR: {e}");

@@ -1,14 +1,13 @@
 use super::Interface;
-use crate::config::Config;
 use crate::files;
-use std::io;
-use std::io::Write;
+use crate::settings::Settings;
+use std::io::{self, Write};
 
 pub struct CmdInterface;
 
 impl Interface for CmdInterface {
-    fn main(config: &Config) -> anyhow::Result<()> {
-        let subject_paths: Box<[_]> = files::get_subjects(config)?.collect();
+    fn main(settings: &Settings) -> anyhow::Result<()> {
+        let subject_paths: Box<[_]> = files::get_subjects(settings)?.collect();
         let subjects: Box<[_]> = subject_paths
             .iter()
             .filter_map(|path| Some((path, path.file_name()?.to_str()?)))
@@ -50,9 +49,9 @@ impl Interface for CmdInterface {
         };
 
         if open {
-            files::open_last_hw_dir(config, subject_dir)?;
+            files::open_last_hw_dir(settings, subject_dir)?;
         } else {
-            files::create_new_hw_dir(config, subject_dir)?;
+            files::create_new_hw_dir(settings, subject_dir)?;
         }
 
         Ok(())

@@ -1,27 +1,26 @@
-use super::open_config::{Formattable, OpenConfig};
+use super::open_settings::{Formattable, OpenSettings};
 use anyhow::anyhow;
 use formatx::formatx;
-use serde::Deserialize;
-use std::path;
-use std::path::Path;
+use serde::{Deserialize, Serialize};
+use std::path::{self, Path};
 
-#[derive(Deserialize)]
-pub struct LyxFileConfig {
+#[derive(Serialize, Deserialize)]
+pub struct LyxFileSettings {
     lyx_template_file: Option<Box<Path>>,
     lyx_filename_format: Box<str>,
     replacements: Box<[LyxReplacementConfig]>,
 
-    open: Option<OpenConfig<LyxFile>>,
+    open: Option<OpenSettings<LyxFile>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LyxReplacementConfig {
     from: Box<str>,
     to_format: Box<str>,
     count: Option<usize>,
 }
 
-impl LyxFileConfig {
+impl LyxFileSettings {
     pub fn lyx_template_file(&self) -> Option<&Path> {
         self.lyx_template_file.as_deref()
     }
@@ -34,7 +33,7 @@ impl LyxFileConfig {
         &self.replacements
     }
 
-    pub fn open_config(&self) -> Option<&OpenConfig<LyxFile>> {
+    pub fn open_settings(&self) -> Option<&OpenSettings<LyxFile>> {
         self.open.as_ref()
     }
 }
