@@ -16,6 +16,16 @@ pub struct OpenSettings<T: Formattable> {
     _phantom: PhantomData<T>,
 }
 
+impl<T: Formattable> Clone for OpenSettings<T> {
+    fn clone(&self) -> Self {
+        Self {
+            binary: self.binary.clone(),
+            args_format: self.args_format.clone(),
+            _phantom: self._phantom.clone(),
+        }
+    }
+}
+
 impl<T: Formattable> OpenSettings<T> {
     pub fn binary(&self) -> &str {
         &self.binary

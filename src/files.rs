@@ -13,11 +13,12 @@ use crate::settings::{
 /// Create a new HW folder under the specified subject directory,
 /// and move the most recently downloaded file (from the downloads directory) to there.
 pub fn create_new_hw_dir(settings: &Settings, subject_dir: &Path) -> anyhow::Result<()> {
-    let (num, hw_dir) = create_hw_dir(settings, subject_dir)?;
-    create_questions_file(settings, num, &hw_dir)?;
-    create_lyx_file(settings, num, &hw_dir)?;
+    let settings = update_subject_settings(settings, subject_dir)?;
+    let (num, hw_dir) = create_hw_dir(&settings, subject_dir)?;
+    create_questions_file(&settings, num, &hw_dir)?;
+    create_lyx_file(&settings, num, &hw_dir)?;
     if settings.open_after_creation() {
-        open_hw_dir(settings, &hw_dir, num)?;
+        open_hw_dir(&settings, &hw_dir, num)?;
     }
     Ok(())
 }
@@ -29,11 +30,23 @@ pub fn get_subjects(settings: &Settings) -> anyhow::Result<impl Iterator<Item = 
 
 /// Open the last HW directory in the given subject.
 pub fn open_last_hw_dir(settings: &Settings, subject_dir: &Path) -> anyhow::Result<()> {
-    let num = get_last_hw_num(settings, subject_dir)?;
+    let settings = update_subject_settings(settings, subject_dir)?;
+    let num = get_last_hw_num(&settings, subject_dir)?;
     let hw_dir = subject_dir.join(settings.hw_dir(num)?);
-    open_hw_dir(settings, &hw_dir, num)?;
+    open_hw_dir(&settings, &hw_dir, num)?;
 
     Ok(())
+}
+
+fn update_subject_settings(settings: &Settings, subject_dir: &Path) -> anyhow::Result<Settings> {
+    let Some(subject_settings_filename) = settings.subject_settings_filename() else {
+        return Ok(settings.clone());
+    };
+    let subject_settings_filename = subject_dir.join(subject_settings_filename);
+    if !subject_settings_filename.is_file() {
+        return Ok(settings.clone());
+    }
+    settings.update([config::File::from(subject_settings_filename)])
 }
 
 fn list_dir(dir: &Path) -> anyhow::Result<impl Iterator<Item = PathBuf>> {

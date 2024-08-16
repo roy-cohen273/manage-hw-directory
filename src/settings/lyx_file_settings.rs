@@ -4,7 +4,7 @@ use formatx::formatx;
 use serde::{Deserialize, Serialize};
 use std::path::{self, Path};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct LyxFileSettings {
     lyx_template_file: Option<Box<Path>>,
     lyx_filename_format: Box<str>,
@@ -13,7 +13,7 @@ pub struct LyxFileSettings {
     open: Option<OpenSettings<LyxFile>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct LyxReplacementConfig {
     from: Box<str>,
     to_format: Box<str>,

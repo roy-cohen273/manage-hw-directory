@@ -27,6 +27,11 @@
   // Open the newly created HW directory.
   open_after_creation: true,
 
+  // Optional: filename of per-subject settings file.
+  // If a per-subject settings file exists in the subject directory, its settings will override the settings in this file.
+  // The format of a per-subject settings file is the same as this file.
+  subject_settings_filename: "hwsettings.json5",
+
   // Optional sub-object for settings regarding the questions file.
   // If this sub-object is omitted, a questions file will not be created.
   questions_file: {

@@ -11,13 +11,16 @@ mod questions_file_settings;
 use lyx_file_settings::LyxFileSettings;
 use questions_file_settings::QuestionsFileSettings;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
     // mandatory:
     subjects_dir: Box<Path>,
     hw_dir_format: Box<str>,
     max_hw_dirs: usize,
     open_after_creation: bool,
+
+    // optional
+    subject_settings_filename: Option<Box<str>>,
 
     // questions file:
     questions_file: Option<QuestionsFileSettings>,
@@ -67,6 +70,10 @@ impl Settings {
 
     pub fn open_after_creation(&self) -> bool {
         self.open_after_creation
+    }
+
+    pub fn subject_settings_filename(&self) -> Option<&str> {
+        self.subject_settings_filename.as_deref()
     }
 
     pub fn questions_file_settings(&self) -> Option<&QuestionsFileSettings> {

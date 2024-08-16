@@ -16,6 +16,7 @@ A tool for managing homework (HW) folders.
   * [x] Open the questions file (e.g. using chrome).
   * [x] Open the LyX file (using LyX).
 * [ ] Better parameterization in general.
+  * [x] Per-subject settings file. 
   * [ ] Hebrew names for subjects.
 
 ### Commandline Frontend

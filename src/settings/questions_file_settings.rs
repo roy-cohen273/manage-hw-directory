@@ -3,7 +3,7 @@ use formatx::formatx;
 use serde::{Deserialize, Serialize};
 use std::path::{self, Path};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct QuestionsFileSettings {
     downloads_dir: Box<Path>,
     questions_filename_format: Box<str>,
