@@ -46,7 +46,11 @@ impl LyxReplacementConfig {
     }
 
     pub fn to(&self, num: usize, hebrew_name: &str) -> Result<String, formatx::Error> {
-        formatx!(self.to_format.to_owned(), num = num, hebrew_name = hebrew_name)
+        formatx!(
+            self.to_format.to_owned(),
+            num = num,
+            hebrew_name = hebrew_name
+        )
     }
 
     pub fn count(&self) -> Option<usize> {
