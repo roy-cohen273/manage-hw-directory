@@ -1,14 +1,17 @@
-# Create HW Folder
-A tool for managing homework (HW) folders.
+# Manage HW Directory
+A tool for managing homework (HW) directories.
 
-## Features
+## Installation
+1. Install `cargo`.
+2. Clone this repo.
+3. Modify `settings.json5`.
+4. `$ cargo run`.
+
+## Features/Progress
 ### Backend
 * [x] Get a list of subjects.
 * [x] Get the questions file: the last downloaded item from downloads directory.
 * [x] Create a new HW directory under the chosen subject directory
-  * [ ] Better parameterization:
-        `HW_DIR_FORMAT` should accept a `subject_dir` parameter.
-        In most use cases, the `HW_DIR_FORMAT` would be `{subject_dir}/...`.
 * [x] Move the questions file into the HW directory.
 * [x] Copy the LyX template into the HW directory.
 * [x] Substitute parameters into the LyX file.
@@ -21,8 +24,9 @@ A tool for managing homework (HW) folders.
 
 ### Commandline Frontend
 * [x] Display list of subjects.
-* [x] Pick a subject.
+* [ ] Pick a subject.
   * [x] Accept index in the subjects list instead of full name.
+  * [ ] Sort subjects list (by last update time?)
 * [x] Open the last HW directory in a subject.
 
 ### TUI Frontend
