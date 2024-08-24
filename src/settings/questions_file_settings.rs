@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{self, Path};
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct QuestionsFileSettings {
     downloads_dir: Box<Path>,
     questions_filename_format: Box<str>,

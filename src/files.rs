@@ -129,7 +129,7 @@ fn create_lyx_file(settings: &Settings, num: usize, dir: &Path) -> anyhow::Resul
             let mut data = fs::read_to_string(lyx_template)?;
             for replace in lyx_file_settings.replacements() {
                 let from = replace.from();
-                let to = replace.to(num)?;
+                let to = replace.to(num, settings.hebrew_name())?;
                 data = if let Some(count) = replace.count() {
                     data.replacen(from, &to, count)
                 } else {

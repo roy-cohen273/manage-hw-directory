@@ -8,6 +8,7 @@ pub trait Formattable {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct OpenSettings<T: Formattable> {
     binary: Box<str>,
     args_format: Box<[Box<str>]>,

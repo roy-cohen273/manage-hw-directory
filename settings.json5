@@ -32,6 +32,12 @@
   // The format of a per-subject settings file is the same as this file.
   subject_settings_filename: "hwsettings.json5",
 
+  // Optional: Hebrew name for subject.
+  // This is mostly useful for per-subject settings files, to set the Hebrew name of that subject.
+  // If set here (the global settings file), this value will be used as the default Hebrew name for all subjects.
+  // If omitted, an empty string will be used as the Hebrew name.
+  hebrew_name: "שם הקורס (לול)",
+
   // Optional sub-object for settings regarding the questions file.
   // If this sub-object is omitted, a questions file will not be created.
   questions_file: {
@@ -97,10 +103,16 @@
         //
         // Named arguments:
         // * `num` -- The HW number.
+        // * `hebrew_name` -- The Hebrew name of the subject.
         to_format: "{num}",
 
         // Optional: Replace only the first `count` appearances.
         // If omitted, all appearances will be replaced.
+        count: 1,
+      },
+      {
+        from: "שם הקורס",
+        to_format: "{hebrew_name}",
         count: 1,
       },
     ],

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{self, Path};
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LyxFileSettings {
     lyx_template_file: Option<Box<Path>>,
     lyx_filename_format: Box<str>,
@@ -14,6 +15,7 @@ pub struct LyxFileSettings {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LyxReplacementConfig {
     from: Box<str>,
     to_format: Box<str>,
@@ -43,8 +45,8 @@ impl LyxReplacementConfig {
         &self.from
     }
 
-    pub fn to(&self, num: usize) -> Result<String, formatx::Error> {
-        formatx!(self.to_format.to_owned(), num = num)
+    pub fn to(&self, num: usize, hebrew_name: &str) -> Result<String, formatx::Error> {
+        formatx!(self.to_format.to_owned(), num = num, hebrew_name = hebrew_name)
     }
 
     pub fn count(&self) -> Option<usize> {

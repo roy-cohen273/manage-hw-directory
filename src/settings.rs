@@ -12,6 +12,7 @@ use lyx_file_settings::LyxFileSettings;
 use questions_file_settings::QuestionsFileSettings;
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Settings {
     // mandatory:
     subjects_dir: Box<Path>,
@@ -21,6 +22,7 @@ pub struct Settings {
 
     // optional
     subject_settings_filename: Option<Box<str>>,
+    hebrew_name: Option<Box<str>>,
 
     // questions file:
     questions_file: Option<QuestionsFileSettings>,
@@ -74,6 +76,10 @@ impl Settings {
 
     pub fn subject_settings_filename(&self) -> Option<&str> {
         self.subject_settings_filename.as_deref()
+    }
+
+    pub fn hebrew_name(&self) -> &str {
+        self.hebrew_name.as_deref().unwrap_or("")
     }
 
     pub fn questions_file_settings(&self) -> Option<&QuestionsFileSettings> {
