@@ -10,6 +10,7 @@ A tool for managing homework (HW) directories.
 ## Features/Progress
 ### Backend
 * [x] Get a list of subjects.
+  * [x] Sort subjects list.
 * [x] Get the questions file: the last downloaded item from downloads directory.
 * [x] Create a new HW directory under the chosen subject directory
 * [x] Move the questions file into the HW directory.
@@ -26,8 +27,11 @@ A tool for managing homework (HW) directories.
 * [x] Display list of subjects.
 * [x] Pick a subject.
   * [x] Accept index in the subjects list instead of full name.
-  * [x] Sort subjects list.
 * [x] Open the last HW directory in a subject.
 
 ### TUI Frontend
-Not currently under development.
+* [x] Display list of subjects.
+* [x] Pick a subject.
+* [x] Open last HW directory in a subject.
+* [ ] Add shortcuts when picking a subject to skip the second dialog
+      (e.g. `^N` to create a new HW directory and `^O` to open the last HW directory).

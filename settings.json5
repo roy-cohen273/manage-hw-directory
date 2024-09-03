@@ -27,6 +27,12 @@
   // Open the newly created HW directory.
   open_after_creation: true,
 
+  // Interface type.
+  // Options are:
+  // * `"CMD"` -- Command line interface.
+  // * `"TUI"` -- Textual interface.
+  interface_type: "TUI",
+
   // Optional: Ordering to use for displaying the subjects (when choosing a subject).
   // If omitted, subjects are sorted alphabetically in ascending order.
   subject_ordering: {

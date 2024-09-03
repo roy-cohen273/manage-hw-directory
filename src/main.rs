@@ -1,6 +1,4 @@
 use config::File;
-use interface::CmdInterface;
-use interface::Interface;
 use settings::Settings;
 
 mod files;
@@ -12,7 +10,7 @@ const SETTINGS_FILE: &str = "settings.json5";
 fn main() -> anyhow::Result<()> {
     let settings = Settings::new([File::with_name(SETTINGS_FILE)])?;
 
-    match CmdInterface::main(&settings) {
+    match settings.interface_type().main(&settings) {
         Ok(()) => {}
         Err(e) => {
             eprintln!("ERROR: {e}");

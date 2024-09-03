@@ -8,6 +8,7 @@ pub mod open_settings;
 mod questions_file_settings;
 mod subject_ordering;
 
+use crate::interface::InterfaceType;
 use lyx_file_settings::LyxFileSettings;
 use questions_file_settings::QuestionsFileSettings;
 use subject_ordering::SubjectOrdering;
@@ -20,6 +21,7 @@ pub struct Settings {
     hw_dir_format: Box<str>,
     max_hw_dirs: usize,
     open_after_creation: bool,
+    interface_type: InterfaceType,
 
     #[serde(default)]
     subject_ordering: SubjectOrdering,
@@ -76,6 +78,10 @@ impl Settings {
 
     pub fn open_after_creation(&self) -> bool {
         self.open_after_creation
+    }
+
+    pub fn interface_type(&self) -> &InterfaceType {
+        &self.interface_type
     }
 
     pub fn subject_ordering(&self) -> &SubjectOrdering {
