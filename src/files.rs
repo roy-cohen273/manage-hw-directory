@@ -25,7 +25,8 @@ pub fn create_new_hw_dir(settings: &Settings, subject_dir: &Path) -> anyhow::Res
 
 /// Get a list of available subjects
 pub fn get_subjects(settings: &Settings) -> anyhow::Result<impl Iterator<Item = PathBuf>> {
-    Ok(list_dir(settings.subjects_dir())?.filter(|path| path.is_dir()))
+    let subjects = list_dir(settings.subjects_dir())?.filter(|path| path.is_dir());
+    Ok(settings.subject_ordering().sort_subjects(subjects))
 }
 
 /// Open the last HW directory in the given subject.

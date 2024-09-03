@@ -22,7 +22,7 @@ impl<T: Formattable> Clone for OpenSettings<T> {
         Self {
             binary: self.binary.clone(),
             args_format: self.args_format.clone(),
-            _phantom: self._phantom.clone(),
+            _phantom: PhantomData,
         }
     }
 }

@@ -24,9 +24,9 @@ A tool for managing homework (HW) directories.
 
 ### Commandline Frontend
 * [x] Display list of subjects.
-* [ ] Pick a subject.
+* [x] Pick a subject.
   * [x] Accept index in the subjects list instead of full name.
-  * [ ] Sort subjects list (by last update time?)
+  * [x] Sort subjects list.
 * [x] Open the last HW directory in a subject.
 
 ### TUI Frontend

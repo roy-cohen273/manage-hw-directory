@@ -6,10 +6,11 @@ use std::path::Path;
 mod lyx_file_settings;
 pub mod open_settings;
 mod questions_file_settings;
-// mod subject_config;
+mod subject_ordering;
 
 use lyx_file_settings::LyxFileSettings;
 use questions_file_settings::QuestionsFileSettings;
+use subject_ordering::SubjectOrdering;
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -19,6 +20,9 @@ pub struct Settings {
     hw_dir_format: Box<str>,
     max_hw_dirs: usize,
     open_after_creation: bool,
+
+    #[serde(default)]
+    subject_ordering: SubjectOrdering,
 
     // optional
     subject_settings_filename: Option<Box<str>>,
@@ -72,6 +76,10 @@ impl Settings {
 
     pub fn open_after_creation(&self) -> bool {
         self.open_after_creation
+    }
+
+    pub fn subject_ordering(&self) -> &SubjectOrdering {
+        &self.subject_ordering
     }
 
     pub fn subject_settings_filename(&self) -> Option<&str> {

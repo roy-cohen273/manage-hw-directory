@@ -27,6 +27,27 @@
   // Open the newly created HW directory.
   open_after_creation: true,
 
+  // Optional: Ordering to use for displaying the subjects (when choosing a subject).
+  // If omitted, subjects are sorted alphabetically in ascending order.
+  subject_ordering: {
+    // What values to sort by?
+    // Options are:
+    // * `"Alphabetical"` -- Sort by subject name, alphabetically.
+    // * `"AccessTime"` -- Sort by access time.
+    // * `"ModifyTime"` -- Sort by modify time.
+    //
+    // Note: If an error occurred while trying to get the value to sort by
+    // (e.g. you do not have permissions to read the subjects metadata),
+    // then the subject will be placed last.
+    by: "ModifyTime",
+
+    // Direction to sort values in.
+    // Options are:
+    // * `"Ascending"`
+    // * `"Descending"`
+    direction: "Descending",
+  },
+
   // Optional: filename of per-subject settings file.
   // If a per-subject settings file exists in the subject directory, its settings will override the settings in this file.
   // The format of a per-subject settings file is the same as this file.
