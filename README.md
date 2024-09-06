@@ -33,5 +33,6 @@ A tool for managing homework (HW) directories.
 * [x] Display list of subjects.
 * [x] Pick a subject.
 * [x] Open last HW directory in a subject.
-* [ ] Add shortcuts when picking a subject to skip the second dialog
-      (e.g. `^N` to create a new HW directory and `^O` to open the last HW directory).
+* [x] Shortcuts:
+  * [x] `Ctrl+O` to open the last HW directory.
+  * [x] `Ctrl+N` to create a new HW directory.

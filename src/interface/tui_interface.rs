@@ -3,9 +3,10 @@ use crate::files;
 use crate::settings::Settings;
 use cursive::{
     align::HAlign,
+    event::{Callback, Event, EventResult},
     view::Scrollable,
-    views::{Dialog, SelectView, TextView},
-    Cursive,
+    views::{Dialog, LinearLayout, OnEventView, PaddedView, SelectView, TextView},
+    Cursive, With,
 };
 
 pub struct TuiInterface;
@@ -19,7 +20,7 @@ impl Interface for TuiInterface {
 
         let mut siv = cursive::default();
 
-        let settings = settings.clone();
+        let settings_select = settings.clone();
         let select = SelectView::new()
             .with_all(subjects.map(|(subject_path, subject_name)| {
                 (subject_name.clone(), (subject_path, subject_name))
@@ -29,11 +30,12 @@ impl Interface for TuiInterface {
             .on_submit(move |siv, (subject_path, subject_name)| {
                 let subject_path_open = subject_path.clone();
                 let subject_path_new = subject_path.clone();
-                let settings_open = settings.clone();
-                let settings_new = settings.clone();
+                let settings_open = settings_select.clone();
+                let settings_new = settings_select.clone();
 
                 siv.add_layer(
-                    Dialog::around(TextView::new(subject_name))
+                    Dialog::text("Pick an action:")
+                        .title(subject_name)
                         .button("Cancel", move |siv| {
                             siv.pop_layer();
                         })
@@ -41,7 +43,7 @@ impl Interface for TuiInterface {
                             if let Err(err) =
                                 files::open_last_hw_dir(&settings_open, &subject_path_open)
                             {
-                                error(siv, err);
+                                error(siv, &err);
                             }
                             siv.pop_layer();
                         })
@@ -49,21 +51,71 @@ impl Interface for TuiInterface {
                             if let Err(err) =
                                 files::create_new_hw_dir(&settings_new, &subject_path_new)
                             {
-                                error(siv, err);
+                                error(siv, &err);
                             }
                             siv.pop_layer();
                         }),
                 )
             });
 
-        siv.add_layer(Dialog::around(select.scrollable()).title("Pick a Subject"));
+        let settings_open_event = settings.clone();
+        let settings_new_event = settings.clone();
+        let select = OnEventView::new(select)
+            .on_pre_event_inner(Event::CtrlChar('o'), move |select, _| {
+                let selection = select.selection();
+                let Some((subject_path, _subject_name)) = selection.as_deref() else {
+                    return Some(EventResult::Consumed(None));
+                };
+
+                if let Err(err) = files::open_last_hw_dir(&settings_open_event, subject_path) {
+                    return Some(EventResult::Consumed(Some(Callback::from_fn(move |siv| {
+                        error(siv, &err);
+                    }))));
+                }
+
+                Some(EventResult::Consumed(None))
+            })
+            .on_pre_event_inner(Event::CtrlChar('n'), move |select, _| {
+                let selection = select.selection();
+                let Some((subject_path, _subject_name)) = selection.as_deref() else {
+                    return Some(EventResult::Consumed(None));
+                };
+
+                if let Err(err) = files::create_new_hw_dir(&settings_new_event, subject_path) {
+                    return Some(EventResult::Consumed(Some(Callback::from_fn(move |siv| {
+                        error(siv, &err);
+                    }))));
+                }
+
+                Some(EventResult::Consumed(None))
+            });
+
+        siv.add_layer(
+            LinearLayout::vertical()
+                .child(
+                    Dialog::around(select.scrollable())
+                        .title("Pick a Subject")
+                )
+                .child(
+                    TextView::new(
+                        concat!(
+                            "Press any letter to jump to the next subject beginning with that letter.\n",
+                            "Press <Enter> to select a subject.\n",
+                            "Press <Ctrl+O> to open the last HW directory.\n",
+                            "Press <Ctrl+N> to create a new HW directory.\n",
+                            "Press <Ctrl+C> to exit.",
+                        )
+                    )
+                        .wrap_with(|text| PaddedView::lrtb(1, 1, 1, 1, text))
+                )
+        );
         siv.run();
 
         Ok(())
     }
 }
 
-fn error(siv: &mut Cursive, err: anyhow::Error) {
+fn error(siv: &mut Cursive, err: &anyhow::Error) {
     // clear the screen. pop all layers.
     while siv.pop_layer().is_some() {}
 
