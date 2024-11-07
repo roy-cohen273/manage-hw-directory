@@ -93,7 +93,20 @@ fn create_questions_file(settings: &Settings, num: usize, hw_dir: &Path) -> anyh
     let questions_file_src = get_most_recent_download(questions_file_settings.downloads_dir())?;
     let questions_file_dest = hw_dir.join(questions_file_settings.questions_filename(num)?);
 
-    fs::rename(questions_file_src, questions_file_dest)?;
+    move_file(&questions_file_src, &questions_file_dest)?;
+
+    Ok(())
+}
+
+fn move_file(src: &Path, dest: &Path) -> anyhow::Result<()> {
+    // first of all, try simply renaming the file
+    if let Ok(()) = fs::rename(src, dest) {
+        return Ok(());
+    }
+
+    // if that failed, try copying the file from src to dest and then deleting src
+    fs::copy(src, dest)?;
+    fs::remove_file(src)?;
 
     Ok(())
 }
