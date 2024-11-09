@@ -44,16 +44,18 @@ impl Interface for TuiInterface {
                                 files::open_last_hw_dir(&settings_open, &subject_path_open)
                             {
                                 error(siv, &err);
+                            } else {
+                                siv.pop_layer();
                             }
-                            siv.pop_layer();
                         })
                         .button("New", move |siv| {
                             if let Err(err) =
                                 files::create_new_hw_dir(&settings_new, &subject_path_new)
                             {
                                 error(siv, &err);
+                            } else {
+                                siv.pop_layer();
                             }
-                            siv.pop_layer();
                         }),
                 )
             });
