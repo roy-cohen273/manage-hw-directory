@@ -1,26 +1,25 @@
 use super::Interface;
-use crate::files;
 use crate::settings::Settings;
+use crate::subject::Subject;
 use std::io::{self, Write};
 
 pub struct CmdInterface;
 
 impl Interface for CmdInterface {
     fn main(settings: &Settings) -> anyhow::Result<()> {
-        let subject_paths: Box<[_]> = files::get_subjects(settings)?.collect();
-        let subjects: Box<[_]> = subject_paths
-            .iter()
-            .filter_map(|path| Some((path, path.file_name()?.to_str()?)))
-            .collect();
+        let mut subjects = Subject::get_all_subjects(settings)?;
 
         println!("List of available subjects:");
-        for (i, (_subject_path, subject_filename)) in subjects.iter().enumerate() {
-            println!("\t{i}. {subject_filename}");
+        for (i, subject) in subjects.iter().enumerate() {
+            println!(
+                "\t{i}. {}",
+                settings.interface_settings().subject_label(subject)?,
+            );
         }
 
         print!("Choose a subject: ");
         io::stdout().flush()?;
-        let (open, subject_dir) = loop {
+        let (open, subject) = loop {
             let mut input = String::new();
             io::stdin().read_line(&mut input)?;
             input = input.trim().to_owned();
@@ -32,15 +31,12 @@ impl Interface for CmdInterface {
 
             if let Ok(i) = input.parse::<usize>() {
                 if i < subjects.len() {
-                    break (open, subjects[i].0);
+                    break (open, &mut subjects[i]);
                 }
             }
 
-            if let Some((subject_path, _subject_name)) = subjects
-                .iter()
-                .find(|(_subject_path, subject_name)| *subject_name == input)
-            {
-                break (open, *subject_path);
+            if let Some(subject) = subjects.iter_mut().find(|subject| subject.name() == input) {
+                break (open, subject);
             }
 
             println!("That was not one of the options...");
@@ -49,9 +45,9 @@ impl Interface for CmdInterface {
         };
 
         if open {
-            files::open_last_hw_dir(settings, subject_dir)?;
+            subject.open_last_hw()?;
         } else {
-            files::create_new_hw_dir(settings, subject_dir)?;
+            subject.create_new_hw_dir()?;
         }
 
         Ok(())

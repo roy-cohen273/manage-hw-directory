@@ -3,12 +3,13 @@ use formatx::formatx;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
+mod interface_settings;
 mod lyx_file_settings;
 pub mod open_settings;
 mod questions_file_settings;
 mod subject_ordering;
 
-use crate::interface::InterfaceType;
+use interface_settings::InterfaceSettings;
 use lyx_file_settings::LyxFileSettings;
 use questions_file_settings::QuestionsFileSettings;
 use subject_ordering::SubjectOrdering;
@@ -21,7 +22,7 @@ pub struct Settings {
     hw_dir_format: Box<str>,
     max_hw_dirs: usize,
     open_after_creation: bool,
-    interface_type: InterfaceType,
+    interface: InterfaceSettings,
 
     #[serde(default)]
     subject_ordering: SubjectOrdering,
@@ -80,8 +81,8 @@ impl Settings {
         self.open_after_creation
     }
 
-    pub fn interface_type(&self) -> &InterfaceType {
-        &self.interface_type
+    pub fn interface_settings(&self) -> &InterfaceSettings {
+        &self.interface
     }
 
     pub fn subject_ordering(&self) -> &SubjectOrdering {

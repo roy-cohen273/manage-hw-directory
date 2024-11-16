@@ -1,7 +1,6 @@
+use crate::subject::Subject;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SubjectOrdering {
@@ -34,15 +33,12 @@ impl Default for SubjectOrdering {
 }
 
 impl SubjectOrdering {
-    pub fn sort_subjects(
-        &self,
-        subjects: impl Iterator<Item = PathBuf>,
-    ) -> impl Iterator<Item = PathBuf> {
+    pub fn sort_subjects(&self, subjects: impl Iterator<Item = Subject>) -> Box<[Subject]> {
         fn inner<K: Ord>(
-            subjects: impl Iterator<Item = PathBuf>,
-            mut f: impl FnMut(&Path) -> Option<K>,
+            subjects: impl Iterator<Item = Subject>,
+            mut f: impl FnMut(&Subject) -> Option<K>,
             direction: SubjectOrderingDirection,
-        ) -> Vec<PathBuf> {
+        ) -> Box<[Subject]> {
             let mut subjects: Vec<_> = subjects
                 .map(|s| {
                     let key = f(&s);
@@ -66,20 +62,19 @@ impl SubjectOrdering {
         match self.by {
             SubjectOrderingBy::Alphabetical => inner(
                 subjects,
-                |path| path.file_name().map(OsStr::to_owned),
+                |subject| Some(subject.name().to_owned()),
                 self.direction,
             ),
             SubjectOrderingBy::AccessTime => inner(
                 subjects,
-                |path| path.metadata().ok()?.accessed().ok(),
+                |subject| subject.path().metadata().ok()?.accessed().ok(),
                 self.direction,
             ),
             SubjectOrderingBy::ModifyTime => inner(
                 subjects,
-                |path| path.metadata().ok()?.modified().ok(),
+                |subject| subject.path().metadata().ok()?.modified().ok(),
                 self.direction,
             ),
         }
-        .into_iter()
     }
 }

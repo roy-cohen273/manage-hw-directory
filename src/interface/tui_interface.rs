@@ -1,95 +1,131 @@
 use super::Interface;
-use crate::files;
 use crate::settings::Settings;
+use crate::subject::Subject;
 use cursive::{
     align::HAlign,
     event::{Callback, Event, EventResult},
-    view::Scrollable,
-    views::{Dialog, LinearLayout, OnEventView, PaddedView, SelectView, TextView},
+    utils::markup::StyledString,
+    view::{Nameable, Scrollable},
+    views::{
+        Dialog, LinearLayout, NamedView, OnEventView, PaddedView, SelectView, TextView, ViewRef,
+    },
     Cursive, With,
 };
+use std::ops::DerefMut;
 
 pub struct TuiInterface;
 
 impl Interface for TuiInterface {
     fn main(settings: &Settings) -> anyhow::Result<()> {
-        let subjects = files::get_subjects(settings)?.filter_map(|path| {
-            let filename = path.file_name()?.to_str()?.to_owned();
-            Some((path, filename))
-        });
+        let subjects: Box<[Subject]> = Subject::get_all_subjects(settings)?;
+        let subject_labels = subjects
+            .iter()
+            .map(|subject| settings.interface_settings().subject_label(subject))
+            .collect::<Result<Box<[_]>, _>>()?;
 
         let mut siv = cursive::default();
 
-        let settings_select = settings.clone();
         let select = SelectView::new()
-            .with_all(subjects.map(|(subject_path, subject_name)| {
-                (subject_name.clone(), (subject_path, subject_name))
-            }))
+            .with_all(
+                subject_labels
+                    .into_vec()
+                    .into_iter()
+                    .map(Into::<StyledString>::into)
+                    .zip(subjects.into_vec()),
+            )
             .h_align(HAlign::Center)
             .autojump()
-            .on_submit(move |siv, (subject_path, subject_name)| {
-                let subject_path_open = subject_path.clone();
-                let subject_path_new = subject_path.clone();
-                let settings_open = settings_select.clone();
-                let settings_new = settings_select.clone();
-
-                siv.add_layer(
-                    Dialog::text("Pick an action:")
-                        .title(subject_name)
-                        .button("Cancel", move |siv| {
-                            siv.pop_layer();
-                        })
-                        .button("Open", move |siv| {
-                            if let Err(err) =
-                                files::open_last_hw_dir(&settings_open, &subject_path_open)
-                            {
-                                error(siv, &err);
-                            } else {
+            .on_submit({
+                let settings = settings.clone();
+                move |siv, subject: &Subject| {
+                    siv.add_layer(
+                        Dialog::text("Pick an action:")
+                            .title(subject.name())
+                            .button("Cancel", move |siv| {
                                 siv.pop_layer();
-                            }
-                        })
-                        .button("New", move |siv| {
-                            if let Err(err) =
-                                files::create_new_hw_dir(&settings_new, &subject_path_new)
-                            {
-                                error(siv, &err);
-                            } else {
-                                siv.pop_layer();
-                            }
-                        }),
-                )
-            });
+                            })
+                            .button("Open", move |siv| {
+                                let mut select: ViewRef<SelectView<Subject>> =
+                                    siv.find_name("select").unwrap();
+                                let (_, subject) = selected(select.deref_mut());
+                                if let Err(err) = subject.open_last_hw() {
+                                    error(siv, &err);
+                                } else {
+                                    siv.pop_layer();
+                                }
+                            })
+                            .button("New", {
+                                let settings = settings.clone();
+                                move |siv| {
+                                    let mut select: ViewRef<SelectView<Subject>> =
+                                        siv.find_name("select").unwrap();
+                                    let (label, subject) = selected(select.deref_mut());
 
-        let settings_open_event = settings.clone();
-        let settings_new_event = settings.clone();
-        let select = OnEventView::new(select)
-            .on_pre_event_inner(Event::CtrlChar('o'), move |select, _| {
-                let selection = select.selection();
-                let Some((subject_path, _subject_name)) = selection.as_deref() else {
-                    return Some(EventResult::Consumed(None));
-                };
-
-                if let Err(err) = files::open_last_hw_dir(&settings_open_event, subject_path) {
-                    return Some(EventResult::Consumed(Some(Callback::from_fn(move |siv| {
-                        error(siv, &err);
-                    }))));
+                                    match subject.create_new_hw_dir().and_then(|()| {
+                                        settings
+                                            .interface_settings()
+                                            .subject_label(subject)
+                                            .map_err(Into::into)
+                                    }) {
+                                        Ok(new_label) => {
+                                            *label = new_label.into();
+                                            siv.pop_layer();
+                                        }
+                                        Err(err) => {
+                                            error(siv, &err);
+                                        }
+                                    }
+                                }
+                            }),
+                    )
                 }
-
-                Some(EventResult::Consumed(None))
             })
-            .on_pre_event_inner(Event::CtrlChar('n'), move |select, _| {
-                let selection = select.selection();
-                let Some((subject_path, _subject_name)) = selection.as_deref() else {
-                    return Some(EventResult::Consumed(None));
-                };
+            .with_name("select");
 
-                if let Err(err) = files::create_new_hw_dir(&settings_new_event, subject_path) {
-                    return Some(EventResult::Consumed(Some(Callback::from_fn(move |siv| {
-                        error(siv, &err);
-                    }))));
+        let select = OnEventView::new(select)
+            .on_pre_event_inner(
+                Event::CtrlChar('o'),
+                move |select: &mut NamedView<SelectView<Subject>>, &_| {
+                    let mut select = select.get_mut();
+                    let Some((_, subject)) = try_selected(select.deref_mut()) else {
+                        return Some(EventResult::Consumed(None));
+                    };
+
+                    if let Err(err) = subject.open_last_hw() {
+                        return Some(EventResult::Consumed(Some(Callback::from_fn(move |siv| {
+                            error(siv, &err);
+                        }))));
+                    }
+
+                    Some(EventResult::Consumed(None))
+                },
+            )
+            .on_pre_event_inner(Event::CtrlChar('n'), {
+                let settings = settings.clone();
+                move |select, _| {
+                    let mut select = select.get_mut();
+                    let Some((label, subject)) = try_selected(select.deref_mut()) else {
+                        return Some(EventResult::Consumed(None));
+                    };
+
+                    match subject.create_new_hw_dir().and_then(|()| {
+                        settings
+                            .interface_settings()
+                            .subject_label(subject)
+                            .map_err(Into::into)
+                    }) {
+                        Ok(new_label) => *label = new_label.into(),
+                        Err(err) => {
+                            return Some(EventResult::Consumed(Some(Callback::from_fn(
+                                move |siv| {
+                                    error(siv, &err);
+                                },
+                            ))))
+                        }
+                    }
+
+                    Some(EventResult::Consumed(None))
                 }
-
-                Some(EventResult::Consumed(None))
             });
 
         siv.add_layer(
@@ -115,6 +151,15 @@ impl Interface for TuiInterface {
 
         Ok(())
     }
+}
+
+fn try_selected(select: &mut SelectView<Subject>) -> Option<(&mut StyledString, &mut Subject)> {
+    let i = select.selected_id()?;
+    select.get_item_mut(i)
+}
+
+fn selected(select: &mut SelectView<Subject>) -> (&mut StyledString, &mut Subject) {
+    try_selected(select).expect("some item should be selected")
 }
 
 fn error(siv: &mut Cursive, err: &anyhow::Error) {

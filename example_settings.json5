@@ -1,0 +1,174 @@
+{
+  // This file contains configuration values in JSON5 format.
+  // The format is determined from the file extension, you can use any of the following formats:
+  // JSON, TOML, YAML, INI, RON, JSON5
+  //
+  // The settings values that have `_format` at the end of their name are format specifiers.
+  // They are used with the `format!` macro. See the `format!` documentation for syntax.
+  // Each format specifier has a list of named arguments it can use.
+  // Do not use positional arguments, or named arguments that are not from that list.
+  // Otherwise, you will get confusing error messages.
+
+  // Path to the subjects directory.
+  // This directory will contain a directory for each subject.
+  subjects_dir: "testing/subjects",
+
+  // A format specifier for the HW directory.
+  // This format is used to search for existing HW directories and to create new HW directories.
+  //
+  // Named arguments:
+  // * `num` -- The HW number.
+  hw_dir_format: "HW{num}",
+
+  // Maximum number of HW directories per subject.
+  max_hw_dirs: 100,
+
+  // Open the newly created HW directory.
+  open_after_creation: true,
+
+  // Sub-object for settings regarding the interface.
+  interface: {
+
+    // Interface type.
+    // Options are:
+    // * `"CMD"` -- Command line interface.
+    // * `"TUI"` -- Textual interface.
+    type: "TUI",
+
+    // The label representing each subject.
+    //
+    // Named arguments:
+    // * `num` -- The HW number (for the last HW in the subject).
+    // * `name` -- The name of the subject.
+    subject_label_format: "{name} ({num})",
+  },
+
+  // Optional: Ordering to use for displaying the subjects (when choosing a subject).
+  // If omitted, subjects are sorted alphabetically in ascending order.
+  subject_ordering: {
+
+    // What values to sort by?
+    // Options are:
+    // * `"Alphabetical"` -- Sort by subject name, alphabetically.
+    // * `"AccessTime"` -- Sort by access time.
+    // * `"ModifyTime"` -- Sort by modify time.
+    //
+    // Note: If an error occurred while trying to get the value to sort by
+    // (e.g. you do not have permissions to read the subjects metadata),
+    // then the subject will be placed last.
+    by: "ModifyTime",
+
+    // Direction to sort values in.
+    // Options are:
+    // * `"Ascending"`
+    // * `"Descending"`
+    direction: "Descending",
+  },
+
+  // Optional: filename of per-subject settings file.
+  // If a per-subject settings file exists in the subject directory, its settings will override the settings in this file.
+  // The format of a per-subject settings file is the same as this file.
+  subject_settings_filename: "hwsettings.json5",
+
+  // Optional: Hebrew name for subject.
+  // This is mostly useful for per-subject settings files, to set the Hebrew name of that subject.
+  // If set here (the global settings file), this value will be used as the default Hebrew name for all subjects.
+  // If omitted, an empty string will be used as the Hebrew name.
+  hebrew_name: "שם הקורס (לול)",
+
+  // Optional sub-object for settings regarding the questions file.
+  // If this sub-object is omitted, a questions file will not be created.
+  questions_file: {
+
+    // Path to the downloads directory.
+    // This is the directory from which the last created file will be taken.
+    downloads_dir: "./testing/downloads/",
+
+    // A format specifier for the questions file.
+    // This format is used to create the questions file when creating a new HW directory,
+    // (The question file is moved from the most recent file in the downloads directory, see `downloads_dir`).
+    //
+    // Named arguments:
+    // * `num` -- The HW number.
+    questions_filename_format: "questions_{num}.pdf",
+
+    // Optional sub-object for settings regarding how to open the questions file.
+    // If omitted, the questions file will not be opened.
+    open: {
+
+      // Name (or path) of the program used to open the questions file.
+      binary: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+
+      // Array of arguments to be passed to the binary. Each element is a format specifier.
+      //
+      // Named arguments:
+      // * `questions_file` -- The full path to the questions file.
+      args_format: [
+        "file:///{questions_file}",
+      ],
+    },
+  },
+
+  // Optional sub-object for settings regarding the LyX file.
+  // If omitted, a LyX file will not be created.
+  lyx_file: {
+
+    // Optional path to the LyX template file.
+    // This file will be copied to the newly created HW directory.
+    // If omitted, a new empty LyX file will be created.
+    lyx_template_file: "testing/mytemplate.lyx",
+
+    // A format specifier for the LyX file.
+    // This format is used to create a new LyX file when creating a new HW directory.
+    // (The contents of the newly created LyX file will be copied from `lyx_template_file`,
+    // unless it is omitted, in which case an empty file will be created).
+    //
+    // Named arguments:
+    // * `num` -- The HW number.
+    lyx_filename_format: "HW{num}.lyx",
+
+    // Optional sub-array for settings regarding find-and-replace in the LyX file.
+    // Each entry in this array describes a single replacement operation.
+    // Note that if this array is not empty, the entire contents of the LyX template file will be copied to memory.
+    // This shouldn't be a problem unless your LyX template file is huge.
+    replacements: [
+      {
+        // The string to replace
+        from: "0000",
+
+        // The string to replace with. This is a format specifier.
+        //
+        // Named arguments:
+        // * `num` -- The HW number.
+        // * `hebrew_name` -- The Hebrew name of the subject.
+        to_format: "{num}",
+
+        // Optional: Replace only the first `count` appearances.
+        // If omitted, all appearances will be replaced.
+        count: 1,
+      },
+      {
+        from: "שם הקורס",
+        to_format: "{hebrew_name}",
+        count: 1,
+      },
+    ],
+
+    // Optional sub-object for settings regarding how to open the LyX file.
+    // If omitted, the LyX file will not be opened.
+    open: {
+
+      // Name (or path) of the program used to open the LyX file.
+      binary: "C:\\Program Files\\LyX 2.3\\bin\\LyX.exe",
+
+      // Array of arguments to be passed to the binary. Each element is a format specifier.
+      //
+      // Named arguments:
+      // * `lyx_file` -- The full path to the LyX file.
+      args_format: [
+        "-x", "command-sequence buffer-end; buffer-view",
+        "{lyx_file}",
+      ],
+    },
+  },
+}

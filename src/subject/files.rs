@@ -23,12 +23,6 @@ pub fn create_new_hw_dir(settings: &Settings, subject_dir: &Path) -> anyhow::Res
     Ok(())
 }
 
-/// Get a list of available subjects
-pub fn get_subjects(settings: &Settings) -> anyhow::Result<impl Iterator<Item = PathBuf>> {
-    let subjects = list_dir(settings.subjects_dir())?.filter(|path| path.is_dir());
-    Ok(settings.subject_ordering().sort_subjects(subjects))
-}
-
 /// Open the last HW directory in the given subject.
 pub fn open_last_hw_dir(settings: &Settings, subject_dir: &Path) -> anyhow::Result<()> {
     let settings = update_subject_settings(settings, subject_dir)?;
@@ -39,7 +33,10 @@ pub fn open_last_hw_dir(settings: &Settings, subject_dir: &Path) -> anyhow::Resu
     Ok(())
 }
 
-fn update_subject_settings(settings: &Settings, subject_dir: &Path) -> anyhow::Result<Settings> {
+pub fn update_subject_settings(
+    settings: &Settings,
+    subject_dir: &Path,
+) -> anyhow::Result<Settings> {
     let Some(subject_settings_filename) = settings.subject_settings_filename() else {
         return Ok(settings.clone());
     };
@@ -57,7 +54,7 @@ fn list_dir(dir: &Path) -> anyhow::Result<impl Iterator<Item = PathBuf>> {
         .map(|entry| entry.path()))
 }
 
-fn get_last_hw_num(settings: &Settings, subject_dir: &Path) -> anyhow::Result<usize> {
+pub fn get_last_hw_num(settings: &Settings, subject_dir: &Path) -> anyhow::Result<usize> {
     // search for the next HW num
     let paths: Box<[_]> = list_dir(subject_dir)?.collect();
     let used_filenames: HashSet<_> = paths
