@@ -3,7 +3,7 @@ use crate::settings::Settings;
 use crate::subject::Subject;
 use cursive::{
     align::HAlign,
-    event::{Callback, Event, EventResult},
+    event::{Callback, Event, EventResult, Key::Esc},
     utils::markup::StyledString,
     view::{Nameable, Scrollable},
     views::{
@@ -39,44 +39,54 @@ impl Interface for TuiInterface {
                 let settings = settings.clone();
                 move |siv, subject: &Subject| {
                     siv.add_layer(
-                        Dialog::text("Pick an action:")
-                            .title(subject.name())
-                            .button("Cancel", move |siv| {
-                                siv.pop_layer();
-                            })
-                            .button("Open", move |siv| {
-                                let mut select: ViewRef<SelectView<Subject>> =
-                                    siv.find_name("select").unwrap();
-                                let (_, subject) = selected(select.deref_mut());
-                                if let Err(err) = subject.open_last_hw() {
-                                    error(siv, &err);
-                                } else {
+                        OnEventView::new(
+                            Dialog::text("Pick an action:")
+                                .title(subject.name())
+                                .button("Cancel", move |siv| {
                                     siv.pop_layer();
-                                }
-                            })
-                            .button("New", {
-                                let settings = settings.clone();
-                                move |siv| {
+                                })
+                                .button("Open", move |siv| {
                                     let mut select: ViewRef<SelectView<Subject>> =
                                         siv.find_name("select").unwrap();
-                                    let (label, subject) = selected(select.deref_mut());
+                                    let (_, subject) = selected(select.deref_mut());
+                                    if let Err(err) = subject.open_last_hw() {
+                                        error(siv, &err);
+                                    } else {
+                                        siv.pop_layer();
+                                    }
+                                })
+                                .button("New", {
+                                    let settings = settings.clone();
+                                    move |siv| {
+                                        let mut select: ViewRef<SelectView<Subject>> =
+                                            siv.find_name("select").unwrap();
+                                        let (label, subject) = selected(select.deref_mut());
 
-                                    match subject.create_new_hw_dir().and_then(|()| {
-                                        settings
-                                            .interface_settings()
-                                            .subject_label(subject)
-                                            .map_err(Into::into)
-                                    }) {
-                                        Ok(new_label) => {
-                                            *label = new_label.into();
-                                            siv.pop_layer();
-                                        }
-                                        Err(err) => {
-                                            error(siv, &err);
+                                        match subject.create_new_hw_dir().and_then(|()| {
+                                            settings
+                                                .interface_settings()
+                                                .subject_label(subject)
+                                                .map_err(Into::into)
+                                        }) {
+                                            Ok(new_label) => {
+                                                *label = new_label.into();
+                                                siv.pop_layer();
+                                            }
+                                            Err(err) => {
+                                                error(siv, &err);
+                                            }
                                         }
                                     }
-                                }
-                            }),
+                                }),
+                        )
+                        .on_pre_event_inner(
+                            Event::Key(Esc),
+                            move |_, _| {
+                                Some(EventResult::Consumed(Some(Callback::from_fn(move |siv| {
+                                    siv.pop_layer();
+                                }))))
+                            },
+                        ),
                     )
                 }
             })
